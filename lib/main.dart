@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart'; // Import the LoginScreen
+import 'user_info_service.dart'; // Import the UserInfoService
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,18 +26,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final UserInfoService _userInfoService = UserInfoService();
   User? _user;
+  String? _userInfoDisplay;
 
   @override
   void initState() {
     super.initState();
-    _user = _auth.currentUser; // Check if the user is already logged in
+    _user = _auth.currentUser;
+    if (_user != null) {
+      _loadUserInfo(); // Load user info from the API or SharedPreferences
+    }
+  }
+
+  Future<void> _loadUserInfo() async {
+    await _userInfoService.fetchAndStoreUserInfo(); // Fetch and store info
+    final userInfo = await _userInfoService.getUserInfoFromPreferences(); // Load from SharedPreferences
+    setState(() {
+      _userInfoDisplay = 'Welcome ${userInfo['username']}';
+    });
   }
 
   void _signOut() async {
     await _auth.signOut();
     setState(() {
       _user = null;
+      _userInfoDisplay = null;
     });
   }
 
@@ -84,11 +99,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(builder: (context) => LoginScreen()),
                 ).then((_) {
                   setState(() {
-                    _user = _auth.currentUser; // Refresh after login
+                    _user = _auth.currentUser;
+                    if (_user != null) {
+                      _loadUserInfo(); // Reload user info after login
+                    }
                   });
                 });
               } else if (value == 'logout') {
-                _confirmSignOut(context); // Show the confirmation dialog
+                _confirmSignOut(context);
               }
             },
             itemBuilder: (BuildContext context) {
@@ -102,29 +120,46 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: _user == null
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('You are not logged in.'), // Display the message
-            SizedBox(height: 16), // Add space between the text and button
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                ).then((_) {
-                  setState(() {
-                    _user = _auth.currentUser; // Refresh after login
-                  });
-                });
-              },
-              child: Text('Login'), // Display login button
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Aligns to the left
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0), // Padding around the text
+            child: Text(
+              _userInfoDisplay ?? '', // Display user info at the top left
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-          ],
-        )
-            : Text('Welcome, ${_user?.email}'),
+          ),
+          Expanded(
+            child: Center(
+              child: _user == null
+                  ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('You are not logged in.'), // Display the message
+                  SizedBox(height: 16), // Add space between the text and button
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                      ).then((_) {
+                        setState(() {
+                          _user = _auth.currentUser;
+                          if (_user != null) {
+                            _loadUserInfo(); // Reload user info after login
+                          }
+                        });
+                      });
+                    },
+                    child: Text('Login'), // Display login button
+                  ),
+                ],
+              )
+                  : Text('Welcome to the app!'),
+            ),
+          ),
+        ],
       ),
     );
   }
