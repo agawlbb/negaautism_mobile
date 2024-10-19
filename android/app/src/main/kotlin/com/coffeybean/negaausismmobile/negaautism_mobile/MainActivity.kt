@@ -1,4 +1,4 @@
-package com.coffeybean.negaausismmobile.negaautism_mobile
+package com.coffeybean.negaautism_mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
