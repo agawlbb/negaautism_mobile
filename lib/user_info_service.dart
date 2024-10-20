@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserInfoService {
   // Fetches user info from the API and stores it in SharedPreferences
   Future<void> fetchAndStoreUserInfo() async {
-    final FirebaseAuth _auth = FirebaseAuth.instance;
-    final User? user = _auth.currentUser;
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
 
     if (user != null) {
       try {
@@ -35,29 +35,33 @@ class UserInfoService {
               Map<String, String> notifications = Map<String, String>.from(data['allowed_notifications']);
               await prefs.setString('allowed_notifications', jsonEncode(notifications));
             } else {
-              print('Error fetching user info: ${data['error']}');
+              throw Exception('Error fetching user info: ${data['error']}');
             }
           } else {
-            print('Failed to fetch user info: ${response.body}');
+            throw Exception('Failed to fetch user info: ${response.body}');
           }
+        } else {
+          throw Exception('ID token is null.');
         }
       } catch (e) {
-        print('Error: $e');
+        throw Exception('Error fetching user info: $e');
       }
+    } else {
+      throw Exception('User is not authenticated.');
     }
   }
 
-  // Retrieves stored user info from SharedPreferences
   Future<Map<String, String?>> getUserInfoFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return {
-      'username': prefs.getString('username'),
-      'email': prefs.getString('email'),
-      'user_type': prefs.getString('user_type'),
-      'specialty': prefs.getString('specialty'),
-      'clinic': prefs.getString('clinic'),
+      'username': prefs.getString('username') ?? 'unknown user', // Default to "unknown user"
+      'email': prefs.getString('email') ?? '', // Default to empty string
+      'user_type': prefs.getString('user_type') ?? '', // Default to empty string
+      'specialty': prefs.getString('specialty') ?? '', // Default to empty string
+      'clinic': prefs.getString('clinic') ?? '', // Default to empty string
     };
   }
+
 
   // Retrieves allowed notifications from SharedPreferences
   Future<Map<String, String>> getAllowedNotifications() async {

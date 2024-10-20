@@ -1,20 +1,21 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
+import 'notification_service.dart'; // Import the new NotificationService
 import 'user_info_service.dart'; // Import UserInfoService to access notifications
 
 class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
+
   @override
-  _NotificationsScreenState createState() => _NotificationsScreenState();
+  NotificationsScreenState createState() => NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class NotificationsScreenState extends State<NotificationsScreen> {
   final UserInfoService _userInfoService = UserInfoService();
+  final NotificationService _notificationService = NotificationService(); // Initialize NotificationService
   Map<String, String> _notifications = {};
   Map<String, bool> _notificationToggles = {};
-  bool _isSubmitting = false;
+  bool isSubmitting = false;
 
   @override
   void initState() {
@@ -45,62 +46,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await prefs.setBool('notification_$key', value); // Save state in SharedPreferences
   }
 
-  Future<void> _submitNotifications() async {
+  void _submitNotifications() async {
     setState(() {
-      _isSubmitting = true;
+      isSubmitting = true;
     });
 
+    // Call the submitNotifications function from NotificationService
     try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        String? idToken = await user.getIdToken();
-
-        // Prepare the array of requested notifications
-        List<int> requestedNotifications = [];
-        _notificationToggles.forEach((key, value) {
-          if (value) {
-            requestedNotifications.add(int.parse(key));
-          }
-        });
-
-        // Prepare the JSON body
-        Map<String, dynamic> requestBody = {
-          'auth_token': idToken,
-          'fcm_token': 'test', // For now, send the test FCM token
-          'requested_notifications': requestedNotifications.isNotEmpty
-              ? requestedNotifications
-              : null, // Optional field, omit if empty
-        };
-
-        // Make the API call
-        final response = await http.post(
-          Uri.parse('https://negaautism.org/api/register_notifications.php'),
-          headers: {'Content-Type': 'application/json'}, // Set header to JSON
-          body: jsonEncode(requestBody), // Send body as JSON
-        );
-
-        if (response.statusCode == 200) {
-          // Handle successful submission
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Notifications updated successfully.'),
-          ));
-        } else {
-          // Handle error
-          print('Error submitting notifications: ${response.body}');
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error submitting notifications.'),
-          ));
-        }
+      await _notificationService.submitNotifications(_notificationToggles);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Notifications requested"),
+        ));
       }
     } catch (e) {
-      print('Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Error submitting notifications.'),
-      ));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString()), // Display the error
+        ));
+      }
     }
 
     setState(() {
-      _isSubmitting = false;
+      isSubmitting = false;
     });
   }
 
@@ -108,7 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manage Notifications'),
+        title: const Text('Manage Notifications'),
       ),
       body: Column(
         children: [
@@ -134,12 +102,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitNotifications,
-              child: _isSubmitting
-                  ? CircularProgressIndicator(
+              onPressed: isSubmitting ? null : _submitNotifications,
+              child: isSubmitting
+                  ? const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               )
-                  : Text('Submit'),
+                  : const Text('Submit'),
             ),
           ),
         ],

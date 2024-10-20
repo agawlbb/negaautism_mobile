@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'login_screen.dart'; // Import the LoginScreen
 import 'user_info_service.dart'; // Import the UserInfoService
 import 'notifications_screen.dart'; // Import the NotificationsScreen
@@ -8,24 +9,28 @@ import 'notifications_screen.dart'; // Import the NotificationsScreen
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: HomeScreen(),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserInfoService _userInfoService = UserInfoService();
   User? _user;
@@ -36,14 +41,42 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _user = _auth.currentUser;
+
     if (_user != null) {
-      _loadUserInfo(); // Load user info from the API or SharedPreferences
-      _checkAllowedNotifications(); // Check if there are any allowed notifications
+      _loadUserData();
     }
   }
 
+  Future<void> _loadUserData() async {
+    try {
+      await _loadUserInfo();
+      await _checkAllowedNotifications();
+    } catch (e) {
+      if (e is SocketException || e.toString().contains('Failed host lookup')) {
+        _setUserName();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not connect to server.')),
+          );
+        }
+      } else {
+        // Display the error message instead of rethrowing
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
+  }
+
+
   Future<void> _loadUserInfo() async {
     await _userInfoService.fetchAndStoreUserInfo(); // Fetch and store info
+    _setUserName();
+  }
+
+  Future<void> _setUserName() async {
     final userInfo = await _userInfoService.getUserInfoFromPreferences(); // Load from SharedPreferences
     setState(() {
       _userInfoDisplay = 'Welcome ${userInfo['username']}';
@@ -73,20 +106,20 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Logout'),
-          content: Text('Are you sure you want to log out?'),
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to log out?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(false); // Dismiss the dialog
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(true); // Confirm sign out
               },
-              child: Text('Logout'),
+              child: const Text('Logout'),
             ),
           ],
         );
@@ -102,14 +135,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('negaautism.org Mobile'),
+        title: const Text('negaautism.org Mobile'),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'login') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 ).then((_) {
                   setState(() {
                     _user = _auth.currentUser;
@@ -124,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
               } else if (value == 'notifications') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => NotificationsScreen()),
+                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
                 );
               }
             },
@@ -135,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text(_user == null ? 'Login' : 'Logout'),
                 ),
                 if (_user != null && _hasAllowedNotifications) // Show notifications link if allowed
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'notifications',
                     child: Text('Manage Notifications'),
                   ),
@@ -151,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(16.0), // Padding around the text
             child: Text(
               _userInfoDisplay ?? '', // Display user info at the top left
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -160,13 +193,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('You are not logged in.'), // Display the message
-                  SizedBox(height: 16), // Add space between the text and button
+                  const Text('You are not logged in.'), // Display the message
+                  const SizedBox(height: 16), // Add space between the text and button
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
                       ).then((_) {
                         setState(() {
                           _user = _auth.currentUser;
@@ -177,11 +210,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       });
                     },
-                    child: Text('Login'), // Display login button
+                    child: const Text('Login'), // Display login button
                   ),
                 ],
               )
-                  : SizedBox.shrink(),
+                  : const SizedBox.shrink(),
             ),
           ),
         ],
