@@ -89,6 +89,9 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       await _loadUserInfo();
       await _checkAllowedNotifications();
+      if (mounted) {
+        setState(() {}); // Rebuild the widget after data is loaded
+      }
     } catch (e) {
       if (e is SocketException || e.toString().contains('Failed host lookup')) {
         _setUserName();
@@ -110,32 +113,36 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserInfo() async {
     await _userInfoService.fetchAndStoreUserInfo(); // Fetch and store info
-    _setUserName();
+    await _setUserName();
   }
 
   Future<void> _setUserName() async {
     final userInfo = await _userInfoService.getUserInfoFromPreferences(); // Load from SharedPreferences
-    setState(() {
-      _userInfoDisplay = 'Welcome ${userInfo['username']}';
-    });
+    if (mounted) {
+      setState(() {
+        _userInfoDisplay = 'Welcome ${userInfo['username']}';
+      });
+    }
   }
 
   Future<void> _checkAllowedNotifications() async {
     final notifications = await _userInfoService.getAllowedNotifications();
-    if (notifications.isNotEmpty) {
+    if (mounted) {
       setState(() {
-        _hasAllowedNotifications = true;
+        _hasAllowedNotifications = notifications.isNotEmpty;
       });
     }
   }
 
   void _signOut() async {
     await _auth.signOut();
-    setState(() {
-      _user = null;
-      _userInfoDisplay = null;
-      _hasAllowedNotifications = false;
-    });
+    if (mounted) {
+      setState(() {
+        _user = null;
+        _userInfoDisplay = null;
+        _hasAllowedNotifications = false;
+      });
+    }
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {
@@ -168,6 +175,26 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _onLogin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    ).then((_) async {
+      _user = _auth.currentUser;
+      if (_user != null) {
+        await _loadUserInfo();
+        await _checkAllowedNotifications();
+        if (mounted) {
+          setState(() {}); // Rebuild the widget after login and data fetch
+        }
+      } else {
+        if (mounted) {
+          setState(() {}); // User is null, still need to rebuild
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,18 +204,7 @@ class HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'login') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                ).then((_) {
-                  setState(() {
-                    _user = _auth.currentUser;
-                    if (_user != null) {
-                      _loadUserInfo(); // Reload user info after login
-                      _checkAllowedNotifications(); // Check notifications
-                    }
-                  });
-                });
+                _onLogin();
               } else if (value == 'logout') {
                 _confirmSignOut(context);
               } else if (value == 'notifications') {
@@ -204,10 +220,10 @@ class HomeScreenState extends State<HomeScreen> {
                   value: _user == null ? 'login' : 'logout',
                   child: Text(_user == null ? 'Login' : 'Logout'),
                 ),
-                if (_user != null && _hasAllowedNotifications) // Show notifications link if allowed
-                  const PopupMenuItem(
+                if (_user != null && _hasAllowedNotifications)
+                  PopupMenuItem( // Removed 'const' keyword here
                     value: 'notifications',
-                    child: Text('Manage Notifications'),
+                    child: const Text('Manage Notifications'),
                   ),
               ];
             },
@@ -234,18 +250,7 @@ class HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 16), // Add space between the text and button
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      ).then((_) {
-                        setState(() {
-                          _user = _auth.currentUser;
-                          if (_user != null) {
-                            _loadUserInfo(); // Reload user info after login
-                            _checkAllowedNotifications(); // Check notifications
-                          }
-                        });
-                      });
+                      _onLogin();
                     },
                     child: const Text('Login'), // Display login button
                   ),
