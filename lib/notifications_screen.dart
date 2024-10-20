@@ -58,6 +58,8 @@ class NotificationsScreenState extends State<NotificationsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Notifications requested"),
         ));
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
