@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart'; // Import the new NotificationService
 import 'user_info_service.dart'; // Import UserInfoService to access notifications
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -51,7 +52,25 @@ class NotificationsScreenState extends State<NotificationsScreen> {
       isSubmitting = true;
     });
 
-    // Call the submitNotifications function from NotificationService
+    // Check and request notification permission
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission();
+
+    if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      // If permission is denied, show a SnackBar and navigate back
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Notification permission denied.')),
+        );
+        await Future.delayed(const Duration(seconds: 1)); // Delay to allow user to read
+        if (mounted) Navigator.pop(context); // Navigate back
+      }
+      setState(() {
+        isSubmitting = false;
+      });
+      return; // Exit the function early
+    }
+
+    // If permission is granted or already granted, proceed to submit notifications
     try {
       await _notificationService.submitNotifications(_notificationToggles);
       if (mounted) {
@@ -59,7 +78,7 @@ class NotificationsScreenState extends State<NotificationsScreen> {
           content: Text("Notifications requested"),
         ));
         await Future.delayed(const Duration(seconds: 1));
-        if (mounted) Navigator.pop(context);
+        if (mounted) Navigator.pop(context); // Navigate back after successful submission
       }
     } catch (e) {
       if (mounted) {

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messaging
 import 'login_screen.dart'; // Import the LoginScreen
 import 'user_info_service.dart'; // Import the UserInfoService
 import 'notifications_screen.dart'; // Import the NotificationsScreen
@@ -9,6 +10,7 @@ import 'notifications_screen.dart'; // Import the NotificationsScreen
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
   runApp(const MyApp());
 }
 
@@ -45,6 +47,32 @@ class HomeScreenState extends State<HomeScreen> {
     if (_user != null) {
       _loadUserData();
     }
+
+    // Initialize Firebase Messaging for handling foreground notifications
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _showNotificationPopup(message);
+    });
+  }
+
+  // Show a notification popup if the app is in the foreground
+  void _showNotificationPopup(RemoteMessage message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(message.notification?.title ?? "Notification"),
+          content: Text(message.notification?.body ?? "You have a new notification."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -69,7 +97,6 @@ class HomeScreenState extends State<HomeScreen> {
       }
     }
   }
-
 
   Future<void> _loadUserInfo() async {
     await _userInfoService.fetchAndStoreUserInfo(); // Fetch and store info
