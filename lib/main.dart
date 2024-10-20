@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart'; // Import the LoginScreen
 import 'user_info_service.dart'; // Import the UserInfoService
+import 'notifications_screen.dart'; // Import the NotificationsScreen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final UserInfoService _userInfoService = UserInfoService();
   User? _user;
   String? _userInfoDisplay;
+  bool _hasAllowedNotifications = false;
 
   @override
   void initState() {
@@ -36,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _user = _auth.currentUser;
     if (_user != null) {
       _loadUserInfo(); // Load user info from the API or SharedPreferences
+      _checkAllowedNotifications(); // Check if there are any allowed notifications
     }
   }
 
@@ -47,11 +50,21 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _checkAllowedNotifications() async {
+    final notifications = await _userInfoService.getAllowedNotifications();
+    if (notifications.isNotEmpty) {
+      setState(() {
+        _hasAllowedNotifications = true;
+      });
+    }
+  }
+
   void _signOut() async {
     await _auth.signOut();
     setState(() {
       _user = null;
       _userInfoDisplay = null;
+      _hasAllowedNotifications = false;
     });
   }
 
@@ -102,11 +115,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     _user = _auth.currentUser;
                     if (_user != null) {
                       _loadUserInfo(); // Reload user info after login
+                      _checkAllowedNotifications(); // Check notifications
                     }
                   });
                 });
               } else if (value == 'logout') {
                 _confirmSignOut(context);
+              } else if (value == 'notifications') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => NotificationsScreen()),
+                );
               }
             },
             itemBuilder: (BuildContext context) {
@@ -115,6 +134,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: _user == null ? 'login' : 'logout',
                   child: Text(_user == null ? 'Login' : 'Logout'),
                 ),
+                if (_user != null && _hasAllowedNotifications) // Show notifications link if allowed
+                  PopupMenuItem(
+                    value: 'notifications',
+                    child: Text('Manage Notifications'),
+                  ),
               ];
             },
           ),
@@ -148,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _user = _auth.currentUser;
                           if (_user != null) {
                             _loadUserInfo(); // Reload user info after login
+                            _checkAllowedNotifications(); // Check notifications
                           }
                         });
                       });
@@ -156,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               )
-                  : Text('Welcome to the app!'),
+                  : SizedBox.shrink(),
             ),
           ),
         ],

@@ -15,7 +15,7 @@ class UserInfoService {
         if (idToken != null) {
           // Make API call
           final response = await http.post(
-            Uri.parse('https://negaautism.org/get_user_info.php'),
+            Uri.parse('https://negaautism.org/api/get_user_info.php'),
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: {'idToken': idToken},
           );
@@ -30,6 +30,10 @@ class UserInfoService {
               await prefs.setString('user_type', data['user_type']);
               await prefs.setString('specialty', data['specialty'] ?? '');
               await prefs.setString('clinic', data['clinic'] ?? '');
+
+              // Save allowed_notifications as a JSON string
+              Map<String, String> notifications = Map<String, String>.from(data['allowed_notifications']);
+              await prefs.setString('allowed_notifications', jsonEncode(notifications));
             } else {
               print('Error fetching user info: ${data['error']}');
             }
@@ -53,5 +57,16 @@ class UserInfoService {
       'specialty': prefs.getString('specialty'),
       'clinic': prefs.getString('clinic'),
     };
+  }
+
+  // Retrieves allowed notifications from SharedPreferences
+  Future<Map<String, String>> getAllowedNotifications() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? notificationsString = prefs.getString('allowed_notifications');
+    if (notificationsString != null) {
+      Map<String, String> notifications = Map<String, String>.from(jsonDecode(notificationsString));
+      return notifications;
+    }
+    return {};
   }
 }
