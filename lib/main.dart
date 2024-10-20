@@ -6,6 +6,8 @@ import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messagi
 import 'login_screen.dart'; // Import the LoginScreen
 import 'user_info_service.dart'; // Import the UserInfoService
 import 'notifications_screen.dart'; // Import the NotificationsScreen
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _checkAppVersion();
     _user = _auth.currentUser;
 
     if (_user != null) {
@@ -52,6 +55,13 @@ class HomeScreenState extends State<HomeScreen> {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showNotificationPopup(message);
     });
+  }
+
+  Future<void> _checkAppVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String currentBuildVersion = packageInfo.buildNumber;
+    prefs.setInt('buildVersion', int.parse(currentBuildVersion));
   }
 
   // Show a notification popup if the app is in the foreground
