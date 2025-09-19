@@ -199,6 +199,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blue,
         title: const Text('negaautism.org Mobile'),
         actions: [
           PopupMenuButton<String>(
@@ -221,9 +222,9 @@ class HomeScreenState extends State<HomeScreen> {
                   child: Text(_user == null ? 'Login' : 'Logout'),
                 ),
                 if (_user != null && _hasAllowedNotifications)
-                  PopupMenuItem( // Removed 'const' keyword here
+                  const PopupMenuItem(
                     value: 'notifications',
-                    child: const Text('Manage Notifications'),
+                    child: Text('Manage Notifications'),
                   ),
               ];
             },
