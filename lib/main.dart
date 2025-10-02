@@ -241,6 +241,30 @@ class HomeScreenState extends State<HomeScreen> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
+
+          // ↓↓↓ Added: full-width pink "Manager events" button under the welcome line ↓↓↓
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // TODO: Manager events action (does nothing for now)
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'Manager events',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // ↑↑↑ End added section ↑↑↑
+
           Expanded(
             child: Center(
               child: _user == null
