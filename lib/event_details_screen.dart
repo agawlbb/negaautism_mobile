@@ -23,6 +23,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   late DateTime _eventDate;
   late final TextEditingController _timeCtrl;
   late final TextEditingController _locCtrl;
+  late final TextEditingController _addressCtrl; // NEW
+  late final TextEditingController _websiteCtrl; // NEW
 
   final _auth = FirebaseAuth.instance;
   bool _submitting = false;
@@ -38,6 +40,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _eventDate = init?.eventDate ?? DateTime.now();
     _timeCtrl = TextEditingController(text: init?.eventTime ?? '');
     _locCtrl = TextEditingController(text: init?.location ?? '');
+    _addressCtrl = TextEditingController(text: init?.address ?? ''); // NEW
+    _websiteCtrl = TextEditingController(text: init?.website ?? ''); // NEW
   }
 
   @override
@@ -46,6 +50,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _descCtrl.dispose();
     _timeCtrl.dispose();
     _locCtrl.dispose();
+    _addressCtrl.dispose(); // NEW
+    _websiteCtrl.dispose(); // NEW
     super.dispose();
   }
 
@@ -85,16 +91,20 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       final idToken = await user.getIdToken(true);
 
       final uri = Uri.parse('https://negaautism.org/api/add_event.php');
-      final resp = await http.post(uri, headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: {
-        'id_token': idToken,
-        'name': _nameCtrl.text.trim(),
-        'description': _descCtrl.text.trim(),
-        'event_date': _yyyyMmDd(_eventDate),
-        'event_time': _timeCtrl.text.trim(),
-        'location': _locCtrl.text.trim(),
-      });
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'id_token': idToken,
+          'name': _nameCtrl.text.trim(),
+          'description': _descCtrl.text.trim(),
+          'event_date': _yyyyMmDd(_eventDate),
+          'event_time': _timeCtrl.text.trim(),
+          'location': _locCtrl.text.trim(),
+          'address': _addressCtrl.text.trim(), // NEW
+          'website': _websiteCtrl.text.trim(), // NEW
+        },
+      );
 
       final data = json.decode(resp.body);
       if (data['success'] != true) throw Exception(data['message']);
@@ -106,7 +116,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -124,17 +135,21 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       final idToken = await user.getIdToken(true);
 
       final uri = Uri.parse('https://negaautism.org/api/edit_event.php');
-      final resp = await http.post(uri, headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: {
-        'id_token': idToken,
-        'id': init.id.toString(),
-        'name': _nameCtrl.text.trim(),
-        'description': _descCtrl.text.trim(),
-        'event_date': _yyyyMmDd(_eventDate),
-        'event_time': _timeCtrl.text.trim(),
-        'location': _locCtrl.text.trim(),
-      });
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'id_token': idToken,
+          'id': init.id.toString(),
+          'name': _nameCtrl.text.trim(),
+          'description': _descCtrl.text.trim(),
+          'event_date': _yyyyMmDd(_eventDate),
+          'event_time': _timeCtrl.text.trim(),
+          'location': _locCtrl.text.trim(),
+          'address': _addressCtrl.text.trim(), // NEW
+          'website': _websiteCtrl.text.trim(), // NEW
+        },
+      );
 
       final data = json.decode(resp.body);
       if (data['success'] != true) throw Exception(data['message']);
@@ -146,7 +161,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -158,7 +174,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this event? This cannot be undone.'),
+        content: const Text(
+            'Are you sure you want to delete this event? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -188,12 +205,14 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       final idToken = await user.getIdToken(true);
 
       final uri = Uri.parse('https://negaautism.org/api/delete_event.php');
-      final resp = await http.post(uri, headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: {
-        'id_token': idToken,
-        'id': init.id.toString(),
-      });
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'id_token': idToken,
+          'id': init.id.toString(),
+        },
+      );
 
       final data = json.decode(resp.body);
       if (data['success'] != true) throw Exception(data['message']);
@@ -205,7 +224,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -213,8 +233,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   String _dateLabel(DateTime d) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
+    ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
+  }
+
+  String? _validateWebsite(String? v) {
+    final s = v?.trim() ?? '';
+    if (s.isEmpty) return null; // optional
+    // Very light validation: must contain a dot; you can strengthen later.
+    if (!s.contains('.')) return 'Enter a valid website or leave blank';
+    return null;
   }
 
   @override
@@ -247,7 +277,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       labelText: 'Event Name',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
 
@@ -292,13 +323,37 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Location is now OPTIONAL
                   TextFormField(
                     controller: _locCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'Location',
+                      labelText: 'Location (optional)',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Address (optional)
+                  TextFormField(
+                    controller: _addressCtrl,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Address (optional)',
+                      hintText: 'Street, city, state, ZIP',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Website (optional)
+                  TextFormField(
+                    controller: _websiteCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Website (optional)',
+                      hintText: 'example.org or https://example.org',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: _validateWebsite,
                   ),
                   const SizedBox(height: 20),
 
@@ -337,7 +392,9 @@ class EditableEvent {
   final String description;
   final DateTime eventDate;
   final String eventTime;
-  final String location;
+  final String location; // optional in UI; empty string is fine
+  final String address;  // NEW
+  final String website;  // NEW
 
   EditableEvent({
     this.id,
@@ -346,5 +403,7 @@ class EditableEvent {
     required this.eventDate,
     required this.eventTime,
     required this.location,
+    required this.address,   // NEW
+    required this.website,   // NEW
   });
 }

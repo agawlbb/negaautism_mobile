@@ -108,6 +108,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             eventDate: e.eventDate,
             eventTime: e.eventTime,
             location: e.location,
+            address:  e.address,
+            website:  e.website,
           ),
         ),
       ),
@@ -222,6 +224,9 @@ class _EventCard extends StatelessWidget {
       if (item.location.isNotEmpty) item.location,
     ].join(' • ');
 
+    final address = item.address.trim();
+    final website = item.website.trim();
+
     return Card(
       elevation: 1.5,
       child: Padding(
@@ -243,6 +248,33 @@ class _EventCard extends StatelessWidget {
             if (subtitle.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(subtitle),
+            ],
+            if (address.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(address)),
+                ],
+              ),
+            ],
+            if (website.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.public, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      website,
+                      style: const TextStyle(decoration: TextDecoration.underline),
+                    ),
+                  ),
+                ],
+              ),
             ],
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -273,6 +305,8 @@ class EventItem {
   final DateTime eventDate;
   final String eventTime;
   final String location;
+  final String address; // NEW
+  final String website; // NEW
 
   EventItem({
     required this.id,
@@ -281,6 +315,8 @@ class EventItem {
     required this.eventDate,
     required this.eventTime,
     required this.location,
+    required this.address,
+    required this.website,
   });
 
   factory EventItem.fromJson(Map<String, dynamic> j) {
@@ -297,6 +333,8 @@ class EventItem {
       eventDate: date,
       eventTime: (j['event_time'] ?? '').toString(),
       location: (j['location'] ?? '').toString(),
+      address: (j['address'] ?? '').toString(),
+      website: (j['website'] ?? '').toString(),
     );
   }
 }
