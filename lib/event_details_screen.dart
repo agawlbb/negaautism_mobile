@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EventDetailsScreen extends StatefulWidget {
   const EventDetailsScreen({
     super.key,
-    this.initial, // if null -> add mode; else edit mode
+    this.initial, // if null => add mode; else edit mode
   });
 
   final EditableEvent? initial;
@@ -20,6 +23,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   late DateTime _eventDate;
   late final TextEditingController _timeCtrl;
   late final TextEditingController _locCtrl;
+
+  final _auth = FirebaseAuth.instance;
+  bool _submitting = false;
 
   bool get _isEditMode => widget.initial != null;
 
@@ -55,27 +61,119 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     }
   }
 
-  void _noopSave() {
+  String _yyyyMmDd(DateTime d) {
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
+  }
+
+  Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isEditMode ? 'Save Changes (no-op)' : 'Create Event (no-op)'),
-      ),
-    );
-    // TODO: wire to add_event.php or edit_event.php
+
+    if (_isEditMode) {
+      await _submitEdit();
+    } else {
+      // ADD MODE - no-op for now
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Create (no-op for now)')),
+      );
+    }
+  }
+
+  Future<void> _submitEdit() async {
+    // Guard: must have an id
+    final init = widget.initial!;
+    if (init.id == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing event id for edit.')),
+      );
+      return;
+    }
+
+    // Collect fields
+    final name = _nameCtrl.text.trim();
+    final desc = _descCtrl.text.trim(); // send '' to allow server to map to NULL
+    final eventDateStr = _yyyyMmDd(_eventDate);
+    final eventTime = _timeCtrl.text.trim();
+    final location = _locCtrl.text.trim();
+
+    if (name.isEmpty || location.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name and Location are required.')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('Not authenticated.');
+      }
+
+      // Fresh token so moderator check is current
+      final idToken = await user.getIdToken(true);
+
+      final uri = Uri.parse('https://negaautism.org/api/edit_event.php');
+      final resp = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'id_token': idToken,
+          'id': init.id.toString(),
+          'name': name,
+          'description': desc,            // server maps '' -> NULL
+          'event_date': eventDateStr,     // YYYY-MM-DD
+          'event_time': eventTime,        // server maps '' -> NULL
+          'location': location,
+        },
+        encoding: Encoding.getByName('utf-8'),
+      );
+
+      if (resp.statusCode != 200) {
+        throw Exception('HTTP ${resp.statusCode}: ${resp.reasonPhrase}');
+      }
+
+      final data = json.decode(resp.body) as Map<String, dynamic>;
+      if (data['success'] != true) {
+        final msg = (data['message'] ?? 'Edit failed').toString();
+        throw Exception(msg);
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message']?.toString() ?? 'Event updated.')),
+      );
+
+      // Return to list; you refresh on .then in ManageEventsScreen
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   void _noopDelete() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Delete (no-op)')),
+      const SnackBar(content: Text('Delete (no-op for now)')),
     );
-    // TODO: wire to delete_event.php
+    // TODO: wire to https://negaautism.org/api/delete_event.php
   }
 
   String _dateLabel(DateTime d) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
-    // Stored/submitted as YYYY-MM-DD when wired
   }
 
   @override
@@ -87,98 +185,105 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           if (_isEditMode)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              onPressed: _noopDelete,
+              onPressed: _submitting ? null : _noopDelete,
               tooltip: 'Delete',
             ),
         ],
       ),
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Event Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
+        child: AbsorbPointer(
+          absorbing: _submitting,
+          child: Opacity(
+            opacity: _submitting ? 0.7 : 1.0,
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  TextFormField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Event Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _descCtrl,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Date picker
-              InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Event Date',
-                  border: OutlineInputBorder(),
-                ),
-                child: InkWell(
-                  onTap: _pickDate,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_dateLabel(_eventDate)),
-                        const Icon(Icons.calendar_today_outlined, size: 18),
-                      ],
+                  TextFormField(
+                    controller: _descCtrl,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _timeCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Event Time (free text)',
-                  hintText: 'e.g. 6:00 PM',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _locCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _noopSave,
-                  icon: const Icon(Icons.save_outlined),
-                  label: Text(_isEditMode ? 'Save Changes' : 'Create'),
-                ),
-              ),
-              if (_isEditMode) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _noopDelete,
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Delete'),
+                  // Date picker
+                  InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Event Date',
+                      border: OutlineInputBorder(),
+                    ),
+                    child: InkWell(
+                      onTap: _pickDate,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(_dateLabel(_eventDate)),
+                            const Icon(Icons.calendar_today_outlined, size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ],
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _timeCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Event Time (free text)',
+                      hintText: 'e.g. 6:00 PM',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: _locCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Location',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _submitting ? null : _handleSave,
+                      icon: const Icon(Icons.save_outlined),
+                      label: Text(_isEditMode ? 'Save Changes' : 'Create'),
+                    ),
+                  ),
+                  if (_isEditMode) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _submitting ? null : _noopDelete,
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Delete'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
