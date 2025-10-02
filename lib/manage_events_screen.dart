@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'event_details_screen.dart';
 import 'package:http/http.dart' as http;
 
 enum EventsScope { upcoming, all }
@@ -80,6 +81,42 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     _fetchEvents();
   }
 
+  void _openAddEvent() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EventDetailsScreen(
+          initial: null, // add mode
+        ),
+      ),
+    ).then((_) {
+      // In future: if created/updated/deleted, refresh here.
+      // For now, still refresh on return so list stays current.
+      _fetchEvents();
+    });
+  }
+
+  void _openEditEvent(EventItem e) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EventDetailsScreen(
+          initial: EditableEvent(
+            id: e.id,
+            name: e.name,
+            description: e.description,
+            eventDate: e.eventDate,
+            eventTime: e.eventTime,
+            location: e.location,
+          ),
+        ),
+      ),
+    ).then((_) {
+      // In future: if changed, refresh; safe to refresh now too.
+      _fetchEvents();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasData = !_loading && _error == null && _events.isNotEmpty;
@@ -147,7 +184,10 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   final e = _events[i];
-                  return _EventCard(item: e);
+                  return InkWell(
+                    onTap: () => _openEditEvent(e),
+                    child: _EventCard(item: e),
+                  );
                 },
               )
                   : ListView(
@@ -161,6 +201,11 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openAddEvent,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Event'),
       ),
     );
   }
