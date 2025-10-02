@@ -1,12 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class EventDetailsScreen extends StatefulWidget {
   const EventDetailsScreen({
     super.key,
-    this.initial, // if null => add mode; else edit mode
+    this.initial, // null => Add mode; non-null => Edit mode
   });
 
   final EditableEvent? initial;
@@ -70,20 +70,69 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
-
     if (_isEditMode) {
       await _submitEdit();
     } else {
-      // ADD MODE - no-op for now
+      await _submitAdd();
+    }
+  }
+
+  Future<void> _submitAdd() async {
+    setState(() => _submitting = true);
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('Not authenticated.');
+      final idToken = await user.getIdToken(true); // fresh token
+
+      final name = _nameCtrl.text.trim();
+      final desc = _descCtrl.text.trim(); // '' allowed, server can map to NULL if desired
+      final eventDateStr = _yyyyMmDd(_eventDate);
+      final eventTime = _timeCtrl.text.trim(); // '' allowed
+      final location = _locCtrl.text.trim();
+
+      if (name.isEmpty || location.isEmpty) {
+        throw Exception('Name and Location are required.');
+      }
+
+      final uri = Uri.parse('https://negaautism.org/api/add_event.php');
+      final resp = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'id_token': idToken,
+          'name': name,
+          'description': desc,
+          'event_date': eventDateStr, // YYYY-MM-DD
+          'event_time': eventTime,
+          'location': location,
+        },
+        encoding: Encoding.getByName('utf-8'),
+      );
+
+      if (resp.statusCode != 200) {
+        throw Exception('HTTP ${resp.statusCode}: ${resp.reasonPhrase}');
+      }
+      final data = json.decode(resp.body) as Map<String, dynamic>;
+      if (data['success'] != true) {
+        throw Exception((data['message'] ?? 'Add failed').toString());
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Create (no-op for now)')),
+        SnackBar(content: Text(data['message']?.toString() ?? 'Event added.')),
       );
+      Navigator.of(context).pop(true); // signal success to refresh list
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
   Future<void> _submitEdit() async {
-    // Guard: must have an id
     final init = widget.initial!;
     if (init.id == null) {
       if (!mounted) return;
@@ -93,45 +142,33 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       return;
     }
 
-    // Collect fields
-    final name = _nameCtrl.text.trim();
-    final desc = _descCtrl.text.trim(); // send '' to allow server to map to NULL
-    final eventDateStr = _yyyyMmDd(_eventDate);
-    final eventTime = _timeCtrl.text.trim();
-    final location = _locCtrl.text.trim();
-
-    if (name.isEmpty || location.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name and Location are required.')),
-      );
-      return;
-    }
-
     setState(() => _submitting = true);
-
     try {
       final user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('Not authenticated.');
-      }
+      if (user == null) throw Exception('Not authenticated.');
+      final idToken = await user.getIdToken(true); // fresh token
 
-      // Fresh token so moderator check is current
-      final idToken = await user.getIdToken(true);
+      final name = _nameCtrl.text.trim();
+      final desc = _descCtrl.text.trim();
+      final eventDateStr = _yyyyMmDd(_eventDate);
+      final eventTime = _timeCtrl.text.trim();
+      final location = _locCtrl.text.trim();
+
+      if (name.isEmpty || location.isEmpty) {
+        throw Exception('Name and Location are required.');
+      }
 
       final uri = Uri.parse('https://negaautism.org/api/edit_event.php');
       final resp = await http.post(
         uri,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'id_token': idToken,
           'id': init.id.toString(),
           'name': name,
-          'description': desc,            // server maps '' -> NULL
-          'event_date': eventDateStr,     // YYYY-MM-DD
-          'event_time': eventTime,        // server maps '' -> NULL
+          'description': desc,         // server will convert '' to NULL as needed
+          'event_date': eventDateStr,  // YYYY-MM-DD
+          'event_time': eventTime,     // '' allowed
           'location': location,
         },
         encoding: Encoding.getByName('utf-8'),
@@ -140,19 +177,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       if (resp.statusCode != 200) {
         throw Exception('HTTP ${resp.statusCode}: ${resp.reasonPhrase}');
       }
-
       final data = json.decode(resp.body) as Map<String, dynamic>;
       if (data['success'] != true) {
-        final msg = (data['message'] ?? 'Edit failed').toString();
-        throw Exception(msg);
+        throw Exception((data['message'] ?? 'Edit failed').toString());
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(data['message']?.toString() ?? 'Event updated.')),
       );
-
-      // Return to list; you refresh on .then in ManageEventsScreen
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -297,7 +330,7 @@ class EditableEvent {
   final int? id; // null => new event
   final String name;
   final String description;
-  final DateTime eventDate; // store as DateTime; convert to 'YYYY-MM-DD' when sending
+  final DateTime eventDate; // stored as DateTime; sent as 'YYYY-MM-DD'
   final String eventTime;
   final String location;
 
