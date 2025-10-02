@@ -74,6 +74,33 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return '$y-$m-$day';
   }
 
+  /// Normalizes a website string for submission.
+  /// Examples:
+  ///  - "" -> ""
+  ///  - "example.org" -> "https://example.org"
+  ///  - "http://example.org" -> "http://example.org"
+  ///  - "https://example.org/page" -> unchanged
+  String _normalizeWebsite(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return '';
+    // Case-insensitive match for http/https at the start
+    if (s.startsWith(RegExp(r'https?://', caseSensitive: false))) return s;
+    if (s.contains('.') && !s.contains(' ')) return 'https://$s';
+    return s;
+  }
+
+  /// Stronger validation: validate the normalized form as a real URI
+  String? _validateWebsite(String? v) {
+    final normalized = _normalizeWebsite(v ?? '');
+    if (normalized.isEmpty) return null; // optional field
+
+    final uri = Uri.tryParse(normalized);
+    if (uri == null || !(uri.hasScheme && uri.host.isNotEmpty)) {
+      return 'Enter a valid website or leave blank';
+    }
+    return null;
+  }
+
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
     if (_isEditMode) {
@@ -102,7 +129,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           'event_time': _timeCtrl.text.trim(),
           'location': _locCtrl.text.trim(),
           'address': _addressCtrl.text.trim(), // NEW
-          'website': _websiteCtrl.text.trim(), // NEW
+          'website': _normalizeWebsite(_websiteCtrl.text), // normalized
         },
       );
 
@@ -147,7 +174,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           'event_time': _timeCtrl.text.trim(),
           'location': _locCtrl.text.trim(),
           'address': _addressCtrl.text.trim(), // NEW
-          'website': _websiteCtrl.text.trim(), // NEW
+          'website': _normalizeWebsite(_websiteCtrl.text), // normalized
         },
       );
 
@@ -237,14 +264,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
     ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
-  }
-
-  String? _validateWebsite(String? v) {
-    final s = v?.trim() ?? '';
-    if (s.isEmpty) return null; // optional
-    // Very light validation: must contain a dot; you can strengthen later.
-    if (!s.contains('.')) return 'Enter a valid website or leave blank';
-    return null;
   }
 
   @override
@@ -345,12 +364,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Website (optional)
+                  // Website (optional) — starts blank; validated & normalized
                   TextFormField(
                     controller: _websiteCtrl,
                     decoration: const InputDecoration(
                       labelText: 'Website (optional)',
-                      hintText: 'example.org or https://example.org',
                       border: OutlineInputBorder(),
                     ),
                     validator: _validateWebsite,
