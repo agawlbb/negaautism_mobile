@@ -82,51 +82,32 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('Not authenticated.');
-      final idToken = await user.getIdToken(true); // fresh token
-
-      final name = _nameCtrl.text.trim();
-      final desc = _descCtrl.text.trim(); // '' allowed, server can map to NULL if desired
-      final eventDateStr = _yyyyMmDd(_eventDate);
-      final eventTime = _timeCtrl.text.trim(); // '' allowed
-      final location = _locCtrl.text.trim();
-
-      if (name.isEmpty || location.isEmpty) {
-        throw Exception('Name and Location are required.');
-      }
+      final idToken = await user.getIdToken(true);
 
       final uri = Uri.parse('https://negaautism.org/api/add_event.php');
-      final resp = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'id_token': idToken,
-          'name': name,
-          'description': desc,
-          'event_date': eventDateStr, // YYYY-MM-DD
-          'event_time': eventTime,
-          'location': location,
-        },
-        encoding: Encoding.getByName('utf-8'),
-      );
+      final resp = await http.post(uri, headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: {
+        'id_token': idToken,
+        'name': _nameCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'event_date': _yyyyMmDd(_eventDate),
+        'event_time': _timeCtrl.text.trim(),
+        'location': _locCtrl.text.trim(),
+      });
 
-      if (resp.statusCode != 200) {
-        throw Exception('HTTP ${resp.statusCode}: ${resp.reasonPhrase}');
-      }
-      final data = json.decode(resp.body) as Map<String, dynamic>;
-      if (data['success'] != true) {
-        throw Exception((data['message'] ?? 'Add failed').toString());
-      }
+      final data = json.decode(resp.body);
+      if (data['success'] != true) throw Exception(data['message']);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['message']?.toString() ?? 'Event added.')),
+        SnackBar(content: Text(data['message'] ?? 'Event added.')),
       );
-      Navigator.of(context).pop(true); // signal success to refresh list
+      Navigator.of(context).pop(true);
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -134,74 +115,101 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   Future<void> _submitEdit() async {
     final init = widget.initial!;
-    if (init.id == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing event id for edit.')),
-      );
-      return;
-    }
+    if (init.id == null) return;
 
     setState(() => _submitting = true);
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('Not authenticated.');
-      final idToken = await user.getIdToken(true); // fresh token
-
-      final name = _nameCtrl.text.trim();
-      final desc = _descCtrl.text.trim();
-      final eventDateStr = _yyyyMmDd(_eventDate);
-      final eventTime = _timeCtrl.text.trim();
-      final location = _locCtrl.text.trim();
-
-      if (name.isEmpty || location.isEmpty) {
-        throw Exception('Name and Location are required.');
-      }
+      final idToken = await user.getIdToken(true);
 
       final uri = Uri.parse('https://negaautism.org/api/edit_event.php');
-      final resp = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'id_token': idToken,
-          'id': init.id.toString(),
-          'name': name,
-          'description': desc,         // server will convert '' to NULL as needed
-          'event_date': eventDateStr,  // YYYY-MM-DD
-          'event_time': eventTime,     // '' allowed
-          'location': location,
-        },
-        encoding: Encoding.getByName('utf-8'),
-      );
+      final resp = await http.post(uri, headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: {
+        'id_token': idToken,
+        'id': init.id.toString(),
+        'name': _nameCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'event_date': _yyyyMmDd(_eventDate),
+        'event_time': _timeCtrl.text.trim(),
+        'location': _locCtrl.text.trim(),
+      });
 
-      if (resp.statusCode != 200) {
-        throw Exception('HTTP ${resp.statusCode}: ${resp.reasonPhrase}');
-      }
-      final data = json.decode(resp.body) as Map<String, dynamic>;
-      if (data['success'] != true) {
-        throw Exception((data['message'] ?? 'Edit failed').toString());
-      }
+      final data = json.decode(resp.body);
+      if (data['success'] != true) throw Exception(data['message']);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['message']?.toString() ?? 'Event updated.')),
+        SnackBar(content: Text(data['message'] ?? 'Event updated.')),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  void _noopDelete() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Delete (no-op for now)')),
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this event? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
-    // TODO: wire to https://negaautism.org/api/delete_event.php
+
+    if (confirmed == true) {
+      await _submitDelete();
+    }
+  }
+
+  Future<void> _submitDelete() async {
+    final init = widget.initial!;
+    if (init.id == null) return;
+
+    setState(() => _submitting = true);
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('Not authenticated.');
+      final idToken = await user.getIdToken(true);
+
+      final uri = Uri.parse('https://negaautism.org/api/delete_event.php');
+      final resp = await http.post(uri, headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: {
+        'id_token': idToken,
+        'id': init.id.toString(),
+      });
+
+      final data = json.decode(resp.body);
+      if (data['success'] != true) throw Exception(data['message']);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'] ?? 'Event deleted.')),
+      );
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   String _dateLabel(DateTime d) {
@@ -218,7 +226,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           if (_isEditMode)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              onPressed: _submitting ? null : _noopDelete,
+              onPressed: _submitting ? null : _confirmDelete,
               tooltip: 'Delete',
             ),
         ],
@@ -253,7 +261,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Date picker
                   InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Event Date',
@@ -308,7 +315,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _submitting ? null : _noopDelete,
+                        onPressed: _submitting ? null : _confirmDelete,
                         icon: const Icon(Icons.delete_outline),
                         label: const Text('Delete'),
                       ),
@@ -324,13 +331,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 }
 
-/// A lightweight data carrier for the details screen.
-/// (Mirrors your API shape; convert from your list model where needed.)
 class EditableEvent {
-  final int? id; // null => new event
+  final int? id;
   final String name;
   final String description;
-  final DateTime eventDate; // stored as DateTime; sent as 'YYYY-MM-DD'
+  final DateTime eventDate;
   final String eventTime;
   final String location;
 
