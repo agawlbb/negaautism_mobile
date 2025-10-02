@@ -8,6 +8,7 @@ import 'user_info_service.dart'; // Import the UserInfoService
 import 'notifications_screen.dart'; // Import the NotificationsScreen
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'manage_events_screen.dart'; // <-- NEW: Manage Events screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -195,6 +196,13 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _openManagerEvents() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ManageEventsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,15 +250,13 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // ↓↓↓ Added: full-width pink "Manager events" button under the welcome line ↓↓↓
+          // Full-width pink "Manager events" button under the welcome line
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Manager events action (does nothing for now)
-                },
+                onPressed: _openManagerEvents, // opens the new screen
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -263,7 +269,6 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          // ↑↑↑ End added section ↑↑↑
 
           Expanded(
             child: Center(
