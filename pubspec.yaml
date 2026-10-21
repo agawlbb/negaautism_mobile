@@ -34,6 +34,8 @@ dependencies:
   package_info_plus: ^4.0.1
   http: ^0.13.3 # For making HTTP requests
   shared_preferences: ^2.0.6 # For storing data locally
+  # Security floor for GHSA-3hpf-ff72-j67p; keep the existing Flutter SDK range.
+  shared_preferences_android: '>=2.3.4 <3.0.0'
   flutter:
     sdk: flutter
 
