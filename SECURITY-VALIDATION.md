@@ -1,4 +1,46 @@
-# Security validation - October 21, 2026
+# Security validation
+
+## October 24, 2026 - native HTTPS SDK requirement (no rebuild)
+
+Official advisory:
+https://github.com/dart-lang/sdk/security/advisories/GHSA-frr6-h895-5pxp
+
+The advisory fixes native TLS certificate validation in Dart stable 3.13.7 /
+Flutter stable 3.47.8. This app makes HTTPS requests through package:http 0.13.6,
+whose native client uses dart:io. Android builds made with the previously
+validated Flutter 3.24.5 / Dart 3.5.4 SDK fall within the affected range.
+Installed app SDK versions have not been established.
+
+pubspec.yaml now requires Dart >=3.13.7 <4.0.0 and Flutter >=3.47.8.
+Use a patched stable Flutter release; do not use the historical SDK below for
+future app builds. Firebase and all package versions remain unchanged.
+
+Read-only local inspection found android/local.properties selecting the isolated
+Flutter 3.24.5 runtime at
+<local Flutter 3.24.5 SDK>.
+The shared PATH SDK at
+<shared local Flutter SDK> reports Flutter 3.47.6 /
+Dart 3.13.5 in bin/cache/flutter.version.json. Both are below the patched floor.
+Neither SDK was modified or invoked during this update.
+
+Validation was limited to source/configuration review and Git whitespace/diff
+checks. No dependency resolution, Flutter/Dart commands, tests, Gradle tasks,
+compilation, app builds, installation, release or deployment were run.
+pubspec.lock is deliberately preserved as the last resolved dependency set;
+its historical SDK entries do not demonstrate patched-SDK validation.
+
+Pre-push inspection on October 24 found only the GitHub origin push target,
+no active local Git hooks, no repository Actions workflows, no repository
+webhooks, and only the ChatGPT Codex Connector GitHub App. No automatic app
+build integration was present in those inspected settings.
+
+Before a later release, select an installed patched stable SDK, resolve and
+review SDK-pinned lockfile changes while preserving the prior security floors,
+then validate Flutter/Android compatibility and rebuild/distribute the app.
+That work remains deferred under the user's no-rebuild instruction. Source
+constraints alone do not repair the SDK or any installed binary.
+
+## October 21, 2026 - historical toolchain validation
 
 Gradle wrapper upgraded from 8.7 to 8.14.6, the patched 8.x line for
 GHSA-xwqc-3h47-hg64, with its official distribution SHA-256 pinned.

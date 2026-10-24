@@ -19,7 +19,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 2.1.0+020100
 
 environment:
-  sdk: ^3.5.3
+  # GHSA-frr6-h895-5pxp: native HTTPS requires the patched SDK.
+  sdk: '>=3.13.7 <4.0.0'
+  flutter: '>=3.47.8'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -34,7 +36,7 @@ dependencies:
   package_info_plus: ^4.0.1
   http: ^0.13.3 # For making HTTP requests
   shared_preferences: ^2.0.6 # For storing data locally
-  # Security floor for GHSA-3hpf-ff72-j67p; keep the existing Flutter SDK range.
+  # Security floor for GHSA-3hpf-ff72-j67p.
   shared_preferences_android: '>=2.3.4 <3.0.0'
   flutter:
     sdk: flutter
