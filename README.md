@@ -55,6 +55,30 @@ The October 29 provider work resolved the lockfile with Flutter 3.47.8 / Dart
 3.13.7 for local analysis/tests. This updates SDK-pinned framework/test packages;
 it does not establish Android build compatibility or update installed apps.
 
+## Provider website assistance
+
+New provider forms offer **Fill from website** through the dedicated
+`wss://vps.negaautism.org/ws` service. Task branch `feature/ai-provider-import`
+is based on fetched `origin/master` at `1c08e78`. The app sends a fresh Firebase
+manager token, website URL and existing category/county choices. The VPS reads
+relevant linked pages and returns suggestions; no hosted backend change is needed.
+
+Administrators explicitly select suggestions to apply. Populated fields start
+unchecked and remain unchanged unless selected. The resulting form stays editable;
+only Save provider uses the existing hosted API and approval process. Website
+assistance applies to new entries, preserving the existing edit workflow.
+Public descriptions follow the one-useful-paragraph, neutral third-person
+standard with no AI-added warnings/cautions. Sources, uncertainty and supporting
+addresses appear only in administrator review notes, and are never saved as part
+of the public description. Unknown choices remain unselected.
+
+The client reconnects using the same owner-bound request ID and refreshed token;
+it never silently starts a replacement AI call. Results expire after 15 minutes
+or a service restart. Manual entry remains available after errors. Native
+Android WebSockets use `dart:io`, adding no package dependency. The VPS must have
+its extraction implementation and credentials deployed before this action works.
+No APK build, installation, or distribution is implied by source integration.
+
 ## Getting Started
 
 ### Android emulator build (October 29, 2026)

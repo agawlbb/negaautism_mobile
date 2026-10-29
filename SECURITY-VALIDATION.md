@@ -114,3 +114,15 @@ the existing Firebase Auth dependency. This avoids the older supported Flutter
 SDK default of 21 conflicting with Firebase's manifest. The patched Android
 preferences implementation compiled in that check. No APK was signed, installed
 or deployed, and no signing credentials were created.
+
+## October 29, 2026 - provider website assistance source validation
+
+Flutter 3.47.8 / Dart 3.13.7 analysis and synthetic transport/review tests cover
+same-ID reconnect without repeating AI work, fresh token callbacks, permission
+failure before connection, explicit selection, preservation of populated fields,
+and separation of private notes/sources from provider save fields. Existing
+provider/contact/filter/preferences tests are retained. No new Flutter dependency
+is introduced. The shared SDK, hosted backend, installed app and approval workflow
+are unchanged. No Android/iOS build, app installation, release or provider save
+was performed. The VPS service uses its own OpenAI key; no key is in mobile code.
+Real authenticated administrator and device validation remain outstanding.
