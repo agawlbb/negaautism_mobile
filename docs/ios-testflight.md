@@ -70,3 +70,14 @@ directory browsing, logo picker and notification permissions/token registration.
   encrypted secret. Exported IPA signature/identity checks run before upload.
 - First unsigned workflow run 40958513132 was cancelled at the user's request
   to start with a signed build. The workflow is manual-only again.
+
+## First signed build compatibility correction
+
+Run 40958868475 passed analysis, Flutter tests, signing tests and credential
+configuration, then failed during automatic SwiftPM migration: firebase_core
+3.6.0 could not locate firebase_sdk_version.rb in the migrated package layout.
+The project opts out of SwiftPM using Flutter's documented pubspec setting and
+uses its existing CocoaPods plugin integration, preserving Firebase versions.
+Flutter 3.47.8 requires iOS 15; the project, Podfile and app framework now agree.
+The app uses standard HTTPS/Firebase encryption and declares no non-exempt
+cryptography. No custom encryption implementation is introduced.
