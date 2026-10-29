@@ -147,3 +147,37 @@ save API and are saved with the other provider fields. The website API extension
 is prepared in `agawlbb/negaautism.org` branch `feature/mobile-provider-logos`;
 that extension must be deployed before the mobile upload feature is used.
 No merge, hosting/VPS deployment, APK build or installation accompanies this work.
+
+## License
+
+Original source and documentation are licensed under **GNU AGPL-3.0-only**,
+the same license used by Coffey Table Recipes and FanControl. See [LICENSE](LICENSE)
+and [NOTICE.md](NOTICE.md) for scope, artwork exclusions, and third-party notices.
+Source: https://github.com/agawlbb/negaautism_mobile
+
+## Building your own copy
+
+Use the patched Flutter/Dart versions above and JDK 17. Keep `pubspec.lock` and
+resolve dependencies with `flutter pub get --enforce-lockfile`; run
+`flutter analyze --no-pub` and `flutter test --no-pub --concurrency=1`.
+Android requires the usual local SDK/Flutter paths in `android/local.properties`.
+The Gradle wrapper files are ignored by the original project; Flutter tooling
+creates them during Android setup/build. Do not commit local SDK configuration.
+
+The included `android/app/google-services.json` is Firebase **client** configuration,
+not a service-account credential. Forks must replace it with the client configuration
+for their own Firebase project and matching Android package. Client configuration
+does not authorize access: enforce backend token/claim checks and Firebase rules.
+Never add service-account JSON, server API keys, signing keys, or passwords.
+
+The app talks to the NEGA website API and its provider-assistance service. Those
+services and their credentials are configured and deployed separately; a fork
+must supply its own compatible backend. Tests use synthetic transports and users.
+
+The current Android Gradle `release` build type uses debug signing. A distributable
+APK must be signed separately with a private release key kept outside Git.
+Retain that key for later updates. Source publication does not build, sign,
+install, or deploy an application. When distributing binaries, provide the exact
+corresponding source, including your changes, under the project license.
+
+See [public-source review](docs/public-source-review.md) for this publication audit.
