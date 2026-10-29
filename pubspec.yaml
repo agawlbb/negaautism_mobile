@@ -35,6 +35,7 @@ dependencies:
   firebase_messaging: ^15.1.3
   package_info_plus: ^4.0.1
   http: ^0.13.3 # For making HTTP requests
+  url_launcher: ^6.3.1 # Open provider websites and phone numbers in other apps.
   shared_preferences: ^2.0.6 # For storing data locally
   # Security floor for GHSA-3hpf-ff72-j67p.
   shared_preferences_android: '>=2.3.4 <3.0.0'

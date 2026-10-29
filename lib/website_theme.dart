@@ -31,6 +31,24 @@ ThemeData websiteTheme() {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
     ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xff8b9d99)),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    ),
+    expansionTileTheme: const ExpansionTileThemeData(
+      textColor: websiteInk,
+      collapsedTextColor: websiteInk,
+      iconColor: websiteTeal,
+      collapsedIconColor: websiteTeal,
+      shape: Border(),
+      collapsedShape: Border(),
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: websiteTeal,

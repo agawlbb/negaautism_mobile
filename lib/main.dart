@@ -249,7 +249,6 @@ class HomeScreenState extends State<HomeScreen> {
           context,
           MaterialPageRoute(builder: (_) => const ProvidersScreen()),
         ),
-        onLogin: _user == null ? _onLogin : null,
       ),
     );
   }

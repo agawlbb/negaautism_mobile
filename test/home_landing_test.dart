@@ -11,7 +11,6 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       var browsed = false;
-      var loggedIn = false;
       for (final size in [const Size(320, 568), const Size(800, 360)]) {
         tester.view.physicalSize = size;
         await tester.pumpWidget(
@@ -23,10 +22,7 @@ void main() {
                 textScaler: const TextScaler.linear(2),
               ),
               child: Scaffold(
-                body: HomeLanding(
-                  onBrowse: () => browsed = true,
-                  onLogin: () => loggedIn = true,
-                ),
+                body: HomeLanding(onBrowse: () => browsed = true),
               ),
             ),
           ),
@@ -34,12 +30,10 @@ void main() {
         await tester.pumpAndSettle();
         await tester.ensureVisible(find.text('Browse providers'));
         await tester.tap(find.text('Browse providers'));
-        await tester.ensureVisible(find.text('Login'));
-        await tester.tap(find.text('Login'));
+        expect(find.text('Login'), findsNothing);
         expect(tester.takeException(), isNull);
       }
       expect(browsed, isTrue);
-      expect(loggedIn, isTrue);
     },
   );
 }

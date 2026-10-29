@@ -25,6 +25,8 @@ the home screen when the provider directory opens.
 `Browse providers` is available without signing in. Search by name or description,
 filter by county/category, and expand a provider to view their description,
 phone and website. County filtering includes providers serving multiple counties.
+Website links open in the external browser, and phone links open the device's
+phone app. Login is available from the header's three-dot menu only.
 
 Accounts with the Firebase `manage_providers` claim can add and edit providers.
 The app refreshes the token before saving; the server checks the claim and token

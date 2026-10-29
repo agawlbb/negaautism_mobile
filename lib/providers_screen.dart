@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import 'provider_edit_screen.dart';
 import 'provider_service.dart';
+import 'provider_contact_links.dart';
+import 'website_theme.dart';
 
 class ProvidersScreen extends StatefulWidget {
   const ProvidersScreen({super.key});
@@ -107,18 +109,29 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     List<ProviderChoice> choices,
     int? value,
     ValueChanged<int?> change,
-  ) => DropdownButton<int>(
-    value: value,
-    isExpanded: true,
-    hint: Text('All ${label.toLowerCase()}'),
-    items: [
-      DropdownMenuItem<int>(
-        value: null,
-        child: Text('All ${label.toLowerCase()}'),
+  ) => Padding(
+    padding: const EdgeInsets.only(top: 12),
+    child: InputDecorator(
+      decoration: InputDecoration(labelText: label),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: value,
+          isExpanded: true,
+          hint: Text('All ${label.toLowerCase()}'),
+          items: [
+            DropdownMenuItem<int>(
+              value: null,
+              child: Text('All ${label.toLowerCase()}'),
+            ),
+            ...choices.map(
+              (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
+            ),
+          ],
+          onChanged: _loading ? null : change,
+          isDense: true,
+        ),
       ),
-      ...choices.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))),
-    ],
-    onChanged: _loading ? null : change,
+    ),
   );
 
   @override
@@ -132,6 +145,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         .toList();
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: websiteBrandGradient),
+        ),
         title: const Text('Providers'),
         actions: [
           IconButton(
@@ -155,7 +171,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 TextField(
@@ -217,16 +233,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         children: [
                           if (p.description.isNotEmpty)
                             SelectableText(p.description),
-                          if (p.phone.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: SelectableText('Phone: ${p.phone}'),
-                            ),
-                          if (p.website.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: SelectableText('Website: ${p.website}'),
-                            ),
+                          ProviderContactLinks(
+                            website: p.website,
+                            phone: p.phone,
+                          ),
                           if (_canManage)
                             TextButton.icon(
                               onPressed: () => _edit(p),

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'provider_service.dart';
+import 'website_theme.dart';
 
 class ProviderEditScreen extends StatefulWidget {
   final ProviderService service;
@@ -101,15 +102,18 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     int? value,
     ValueChanged<int?> change,
   ) {
-    return DropdownButtonFormField<int>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(labelText: label),
-      items: choices
-          .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
-          .toList(),
-      onChanged: _saving ? null : change,
-      validator: (v) => v == null ? 'Choose a ${label.toLowerCase()}' : null,
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: DropdownButtonFormField<int>(
+        initialValue: value,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: label),
+        items: choices
+            .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+            .toList(),
+        onChanged: _saving ? null : change,
+        validator: (v) => v == null ? 'Choose a ${label.toLowerCase()}' : null,
+      ),
     );
   }
 
@@ -118,6 +122,9 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     canPop: !_saving,
     child: Scaffold(
       appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: websiteBrandGradient),
+        ),
         title: Text(widget.provider == null ? 'Add provider' : 'Edit provider'),
       ),
       body: Form(
@@ -126,8 +133,11 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             if (widget.provider == null)
-              const Text(
-                'New providers await approval on the website before appearing in the directory.',
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Text(
+                  'New providers await approval on the website before appearing in the directory.',
+                ),
               ),
             TextFormField(
               controller: _name,

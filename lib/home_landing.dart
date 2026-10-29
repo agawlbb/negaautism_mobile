@@ -5,14 +5,8 @@ import 'website_theme.dart';
 class HomeLanding extends StatelessWidget {
   final String? welcome;
   final VoidCallback onBrowse;
-  final VoidCallback? onLogin;
 
-  const HomeLanding({
-    super.key,
-    this.welcome,
-    required this.onBrowse,
-    this.onLogin,
-  });
+  const HomeLanding({super.key, this.welcome, required this.onBrowse});
 
   @override
   Widget build(BuildContext context) {
@@ -102,13 +96,6 @@ class HomeLanding extends StatelessWidget {
                             label: const Text('Browse providers'),
                           ),
                         ),
-                        if (onLogin != null) ...[
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: onLogin,
-                            child: const Text('Login'),
-                          ),
-                        ],
                       ],
                     ),
                   ),
