@@ -45,8 +45,8 @@ This feature requires the website's `api/get_providers.php` and
 deployment is separate; an unavailable API displays an error with a retry option.
 
 Development and tests run in the VPS development container; Android builds and
-device validation run on the laptop. Do not use GitHub Actions runners. There is
-no iOS app in the current scope. No production writes are needed for tests:
+device validation run on the laptop. iOS builds and TestFlight uploads use manually dispatched GitHub macOS runners,
+as authorized October 29, 2026. See [iOS release setup](docs/ios-testflight.md). No production writes are needed for tests:
 
 ```
 flutter pub get --offline
