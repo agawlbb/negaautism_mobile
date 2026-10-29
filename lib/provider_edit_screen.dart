@@ -13,11 +13,15 @@ class ProviderEditScreen extends StatefulWidget {
   final ProviderService service;
   final ProviderDirectory directory;
   final DirectoryProvider? provider;
+  final FirebaseAuth? auth;
+  final ProviderExtractionService? extractionService;
   const ProviderEditScreen({
     super.key,
     required this.service,
     required this.directory,
     this.provider,
+    this.auth,
+    this.extractionService,
   });
   @override
   State<ProviderEditScreen> createState() => _ProviderEditScreenState();
@@ -25,6 +29,7 @@ class ProviderEditScreen extends StatefulWidget {
 
 class _ProviderEditScreenState extends State<ProviderEditScreen> {
   final _form = GlobalKey<FormState>();
+  FirebaseAuth get _auth => widget.auth ?? FirebaseAuth.instance;
   late final TextEditingController _name, _website, _description, _phone;
   late final String? _uid;
   int? _category, _county;
@@ -39,7 +44,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
   void initState() {
     super.initState();
     final p = widget.provider;
-    _uid = FirebaseAuth.instance.currentUser?.uid;
+    _uid = _auth.currentUser?.uid;
     _name = TextEditingController(text: p?.name);
     _website = TextEditingController(text: p?.website);
     _description = TextEditingController(text: p?.description);
@@ -58,7 +63,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
   }
 
   Future<String> _freshToken() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null || user.uid != _uid) {
       throw const ProviderExtractionException(
         'Your sign-in changed. Close this form and sign in again.',
@@ -74,7 +79,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     }
     if (result.claims?['manage_providers'] != true ||
         result.token == null ||
-        FirebaseAuth.instance.currentUser?.uid != _uid) {
+        _auth.currentUser?.uid != _uid) {
       throw const ProviderExtractionException(
         'Provider management permission is required.',
       );
@@ -100,17 +105,23 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
       return;
     }
     if (!mounted) return;
-    final selected = await Navigator.push<Map<String, dynamic>>(
+    final review = await Navigator.push<ProviderReviewResult>(
       context,
       MaterialPageRoute(
         builder: (_) => ProviderSuggestionsScreen(
           suggestions: _suggestions!,
           directory: widget.directory,
           current: _current,
+          onAdd: widget.provider == null ? _addFromReview : null,
         ),
       ),
     );
-    if (!mounted || selected == null) return;
+    if (!mounted || review == null) return;
+    if (review.savedMessage != null) {
+      await _closeAfterSave(review.savedMessage!);
+      return;
+    }
+    final selected = review.fields;
     try {
       await _freshToken();
       if (!mounted) return;
@@ -150,7 +161,8 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
       return;
     }
     _extraction?.close();
-    final service = _extraction = ProviderExtractionService();
+    final service = _extraction =
+        widget.extractionService ?? ProviderExtractionService();
     setState(() {
       _extracting = true;
       _error = null;
@@ -180,6 +192,77 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     }
   }
 
+  Future<void> _closeAfterSave(String message) async {
+    setState(() => _saving = false);
+    // Allow PopScope to rebuild before closing the form.
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) Navigator.pop(context, message);
+  }
+
+  String _saveError(Object error) => error is ProviderApiException
+      ? error.message
+      : error is ProviderExtractionException
+      ? error.message
+      : error is TimeoutException
+      ? 'The save timed out. Check the directory before submitting again.'
+      : 'Unable to confirm the save. Check your connection and the directory before trying again.';
+
+  Future<String> _submit(Map<String, dynamic> fields) async {
+    final name = (fields['name'] as String? ?? '').trim();
+    final website = (fields['website'] as String? ?? '').trim();
+    final description = fields['description'] as String? ?? '';
+    final phone = fields['phone'] as String? ?? '';
+    final category = fields['category_id'];
+    final county = fields['county_id'];
+    if (name.isEmpty || name.length > 255) {
+      throw const ProviderApiException(
+        'Enter a provider name in the provider form before adding.',
+      );
+    }
+    if (!widget.directory.categories.any((c) => c.id == category) ||
+        !widget.directory.counties.any((c) => c.id == county)) {
+      throw const ProviderApiException(
+        'Select a category and county in the provider form before adding.',
+      );
+    }
+    if (description.length > 10000 ||
+        phone.length > 50 ||
+        website.length > 255 ||
+        (website.isNotEmpty && providerWebsiteUri(website) == null)) {
+      throw const ProviderApiException(
+        'Correct the contact details or description in the provider form before adding.',
+      );
+    }
+    final token = await _freshToken();
+    return widget.service.save(
+      token: token,
+      id: widget.provider?.id,
+      name: name,
+      website: website,
+      description: description,
+      phone: phone,
+      categoryId: category as int,
+      countyId: county as int,
+    );
+  }
+
+  Future<String> _addFromReview(Map<String, dynamic> selected) async {
+    if (_saving) {
+      throw const ProviderApiException('An add is already in progress.');
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      return await _submit({..._current, ...selected});
+    } catch (e) {
+      throw ProviderApiException(_saveError(e));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _save() async {
     if (_saving || _extracting || !_form.currentState!.validate()) return;
     setState(() {
@@ -187,41 +270,10 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
       _error = null;
     });
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null || user.uid != _uid) {
-        throw const ProviderApiException(
-          'Your sign-in changed. Close this form and sign in again.',
-        );
-      }
-      final result = await user.getIdTokenResult(true);
-      if (result.claims?['manage_providers'] != true ||
-          result.token == null ||
-          FirebaseAuth.instance.currentUser?.uid != _uid) {
-        throw const ProviderApiException(
-          'Provider management permission is required.',
-        );
-      }
-      final message = await widget.service.save(
-        token: result.token!,
-        id: widget.provider?.id,
-        name: _name.text,
-        website: _website.text,
-        description: _description.text,
-        phone: _phone.text,
-        categoryId: _category!,
-        countyId: _county!,
-      );
-      if (mounted) Navigator.pop(context, message);
+      final message = await _submit(_current);
+      if (mounted) await _closeAfterSave(message);
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e is ProviderApiException
-              ? e.message
-              : e is TimeoutException
-              ? 'The save timed out. Check the directory before submitting again.'
-              : 'Unable to confirm the save. Check your connection and the directory before trying again.';
-        });
-      }
+      if (mounted) setState(() => _error = _saveError(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -361,7 +413,13 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
               ),
             ElevatedButton(
               onPressed: _saving || _extracting ? null : _save,
-              child: Text(_saving ? 'Saving…' : 'Save provider'),
+              child: Text(
+                _saving
+                    ? 'Saving…'
+                    : widget.provider == null
+                    ? 'Add provider'
+                    : 'Save provider',
+              ),
             ),
           ],
         ),

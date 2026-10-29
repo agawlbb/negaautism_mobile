@@ -126,3 +126,15 @@ is introduced. The shared SDK, hosted backend, installed app and approval workfl
 are unchanged. No Android/iOS build, app installation, release or provider save
 was performed. The VPS service uses its own OpenAI key; no key is in mobile code.
 Real authenticated administrator and device validation remain outstanding.
+
+## October 29, 2026 - direct add from AI review
+
+Synthetic widget tests verify that review Add provider submits only the selected
+suggestions combined with existing form values, saves once, and closes both
+routes to the directory. Manual add also closes the entry route after save.
+Tests cover a disabled button during submission, timeout retention without an
+automatic write retry, and missing category/county preventing submission while
+allowing manual completion. Fresh Firebase permission verification is shared by
+both save paths; review notes, source excerpts and supporting addresses are not
+save fields. HTTP saves and Firebase users/tokens are synthetic. No real provider
+write, hosted backend change, Android build, installation or deployment occurred.

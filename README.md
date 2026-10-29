@@ -64,8 +64,14 @@ manager token, website URL and existing category/county choices. The VPS reads
 relevant linked pages and returns suggestions; no hosted backend change is needed.
 
 Administrators explicitly select suggestions to apply. Populated fields start
-unchecked and remain unchanged unless selected. The resulting form stays editable;
-only Save provider uses the existing hosted API and approval process. Website
+unchecked and remain unchanged unless selected. The resulting form stays editable.
+The AI review screen offers **Add provider** to save the current fields plus
+selected suggestions through the existing hosted API and approval process.
+Successful adds close both review and entry screens and return to the directory.
+**Apply selected suggestions** remains available for manual corrections before
+adding. The manual form also returns to the directory after a successful add.
+Incomplete or failed adds stay open; database writes are never automatically
+retried, and private review notes/sources are never submitted. Website
 assistance applies to new entries, preserving the existing edit workflow.
 Public descriptions follow the one-useful-paragraph, neutral third-person
 standard with no AI-added warnings/cautions. Sources, uncertainty and supporting

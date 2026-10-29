@@ -93,14 +93,14 @@ void main() {
   testWidgets(
     'populated fields stay unchecked; notes and sources are separate',
     (tester) async {
-      Map<String, dynamic>? selected;
+      ProviderReviewResult? selected;
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(
               body: TextButton(
                 onPressed: () async {
-                  selected = await Navigator.push<Map<String, dynamic>>(
+                  selected = await Navigator.push<ProviderReviewResult>(
                     context,
                     MaterialPageRoute(
                       builder: (_) => ProviderSuggestionsScreen(
@@ -142,10 +142,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Apply selected suggestions'));
       await tester.pumpAndSettle();
-      expect(selected!.containsKey('name'), false);
-      expect(selected!['description'], 'The clinic offers therapy.');
-      expect(selected!.containsKey('review_notes'), false);
-      expect(selected!.containsKey('sources'), false);
+      expect(selected!.fields.containsKey('name'), false);
+      expect(selected!.fields['description'], 'The clinic offers therapy.');
+      expect(selected!.fields.containsKey('review_notes'), false);
+      expect(selected!.fields.containsKey('sources'), false);
     },
   );
 }
