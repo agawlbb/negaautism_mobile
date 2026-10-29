@@ -1,7 +1,5 @@
 name: iOS build and TestFlight
 on:
-  push:
-    branches: [feature/ios-testflight-20261029]
   workflow_dispatch:
     inputs:
       publish:
@@ -41,6 +39,7 @@ jobs:
           xcodebuild -version
       - run: flutter --version
       - run: flutter pub get --enforce-lockfile
+      - run: python3 -m unittest discover -s scripts -p test_ios_release.py
       - run: flutter analyze --no-pub
       - run: flutter test --no-pub --concurrency=1
       - name: Configure Firebase and signing
@@ -51,6 +50,9 @@ jobs:
       - name: Build signed archive
         if: ${{ inputs.publish }}
         run: flutter build ipa --release --build-number "$GITHUB_RUN_NUMBER" --export-options-plist "$RUNNER_TEMP/ExportOptions.plist"
+      - name: Verify exported distribution package
+        if: ${{ inputs.publish }}
+        run: python3 scripts/verify_ios_ipa.py
       - name: Upload to App Store Connect
         if: ${{ inputs.publish }}
         run: >-

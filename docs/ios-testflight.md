@@ -48,7 +48,7 @@ in App Store Connect before reporting publication.
 Validation pending: first macOS build, launch on iPhone, Firebase sign-in,
 directory browsing, logo picker and notification permissions/token registration.
 
-## Registered account records — October 29, 2026
+## Registered account records ï¿½ October 29, 2026
 
 - Apple App ID: `org.negaautism.mobile`, description NEGA Autism; Push
   Notifications enabled.
@@ -57,7 +57,16 @@ directory browsing, logo picker and notification permissions/token registration.
   primary language English (U.S.), iOS, limited app access to the account holder.
 - App record: https://appstoreconnect.apple.com/apps/6828599193/distribution
 - Firebase: existing `negaautism` project, new Apple app NEGA Autism iOS with the
-  same bundle ID. Configuration download/import remains pending.
+  same bundle ID. Configuration downloaded through the explicitly approved Chrome fallback and stored as an encrypted Actions secret.
 - Dedicated upload key form prepared as NEGA Autism CI with Developer access;
-  generation/download and encrypted GitHub secret storage remain pending.
+  created by the user as Z8RDRFJ7SN; the downloaded key is validated and stored as an encrypted Actions secret.
 - No Mac build or TestFlight upload has run. There are no uploaded builds yet.
+
+- Reuse of Alarm Beans' distribution certificate/password was explicitly approved;
+  encrypted copies are configured only in NEGA's Actions secrets. Original files
+  and Alarm Beans' configuration are unchanged.
+- NEGA App Store profile: 1cd7bbe5-f68e-4a36-ac24-32443a959918,
+  app org.negaautism.mobile, team FKR675M7PM, production push; configured as an
+  encrypted secret. Exported IPA signature/identity checks run before upload.
+- First unsigned workflow run 40958513132 was cancelled at the user's request
+  to start with a signed build. The workflow is manual-only again.
