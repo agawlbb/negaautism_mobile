@@ -235,9 +235,6 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Review and edit all provider details here, including anything the website did not supply. Existing values are kept unless selected or edited. Equivalent HTTPS website suggestions are selected automatically.',
-              ),
               for (final entry in labels.entries) ...[
                 if (_hasValue(widget.suggestions.fields[entry.key]) &&
                     (_text.containsKey(entry.key) ||
@@ -285,26 +282,6 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: SelectableText(note),
-                ),
-              const SizedBox(height: 12),
-              const Text(
-                'Sources',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              for (final source in widget.suggestions.sources)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(source['field'] ?? ''),
-                      SelectableText(source['excerpt'] ?? ''),
-                      ProviderContactLinks(
-                        website: source['url'] ?? '',
-                        phone: '',
-                      ),
-                    ],
-                  ),
                 ),
             ],
           ),

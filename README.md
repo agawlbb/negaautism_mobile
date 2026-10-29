@@ -33,7 +33,8 @@ phone app. Login is available from the header's three-dot menu only.
 Accounts with the Firebase `manage_providers` claim can add and edit providers.
 The app refreshes the token before saving; the server checks the claim and token
 revocation independently. User type and notification preferences do not grant
-management access. New providers await approval in the existing website admin
+management access. New providers added by verified managers are approved
+immediately by the website API. Public submissions retain their approval
 workflow. Editing preserves approval, logos, submitter and reviews. Logo uploads,
 approval and deletion remain website operations.
 
@@ -69,7 +70,9 @@ no value. Existing values are retained unless selected or edited. An equivalent
 HTTPS website suggestion (such as justpeople.org to https://justpeople.org) is
 selected automatically; a different website or page is not.
 The AI review screen validates required fields before **Add provider** saves
-the reviewed form through the existing hosted API and approval process.
+the reviewed form through the existing hosted API. The review keeps administrator
+notes and supporting addresses without showing a Sources section or introductory
+instructions. The entry form also omits instructional paragraphs.
 Successful adds close both review and entry screens and return to the directory.
 **Apply changes to provider form** transfers all reviewed edits back to the
 entry form, including cleared optional fields. The manual form also returns

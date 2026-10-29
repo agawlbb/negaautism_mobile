@@ -91,12 +91,12 @@ void main() {
     );
   });
 
-  test('create omits ID and reports pending approval', () async {
+  test('create omits ID and reports confirmed addition', () async {
     final service = ProviderService(
       client: MockClient((request) async {
         expect((jsonDecode(request.body) as Map).containsKey('id'), isFalse);
         return http.Response(
-          '{"success":true,"message":"Awaiting approval."}',
+          '{"success":true,"message":"Provider added."}',
           201,
         );
       }),
@@ -112,7 +112,7 @@ void main() {
         categoryId: 1,
         countyId: 2,
       ),
-      'Awaiting approval.',
+      'Provider added.',
     );
   });
 

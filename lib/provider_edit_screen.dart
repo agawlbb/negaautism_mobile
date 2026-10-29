@@ -316,19 +316,6 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (widget.provider == null)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'New providers await approval on the website before appearing in the directory.',
-                ),
-              ),
-            if (widget.provider == null) ...[
-              const Text(
-                'Enter a website below, then choose Fill from website, or enter details manually.',
-              ),
-              const SizedBox(height: 12),
-            ],
             TextFormField(
               controller: _name,
               enabled: !_saving && !_extracting,
@@ -380,7 +367,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
               if (_suggestions != null)
                 TextButton(
                   onPressed: _extracting ? null : _reviewSuggestions,
-                  child: const Text('Review suggestions and sources'),
+                  child: const Text('Review suggestions'),
                 ),
             ],
             TextFormField(

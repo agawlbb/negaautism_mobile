@@ -91,7 +91,7 @@ void main() {
   });
 
   testWidgets(
-    'populated fields stay unchecked; notes and sources are separate',
+    'review keeps editable fields and administrator notes without instructions or sources',
     (tester) async {
       tester.view.physicalSize = const Size(1000, 2400);
       tester.view.devicePixelRatio = 1;
@@ -132,6 +132,14 @@ void main() {
       expect(nameCheckbox.value, false);
       expect(descriptionCheckbox.value, true);
       expect(find.text('Administrator review notes'), findsOneWidget);
+      expect(find.text('County needs administrator review.'), findsOneWidget);
+      expect(find.text('Supporting address: 123 Test Street'), findsOneWidget);
+      expect(find.text('Sources'), findsNothing);
+      expect(find.text('Therapy services'), findsNothing);
+      expect(
+        find.textContaining('Review and edit all provider details here'),
+        findsNothing,
+      );
       await tester.scrollUntilVisible(
         find.text('Apply changes to provider form'),
         250,

@@ -151,10 +151,7 @@ void main() {
     expect(requests.single.containsKey('supporting_address'), false);
     response.complete(
       http.Response(
-        jsonEncode({
-          'success': true,
-          'message': 'Provider added; pending approval.',
-        }),
+        jsonEncode({'success': true, 'message': 'Provider added.'}),
         200,
       ),
     );
@@ -181,6 +178,8 @@ void main() {
     );
     addTearDown(service.close);
     await openForm(tester, service);
+    expect(find.textContaining('New providers await approval'), findsNothing);
+    expect(find.textContaining('Enter a website below'), findsNothing);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Provider name'),
       'Manual clinic',
