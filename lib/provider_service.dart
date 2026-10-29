@@ -1,3 +1,4 @@
+import 'api_endpoints.dart';
 import 'dart:convert';
 
 import 'provider_logo.dart';
@@ -140,8 +141,7 @@ class ProviderService {
   }
 
   Future<ProviderDirectory> load({int? countyId, int? categoryId}) async {
-    final uri = _base
-        .resolve('get_providers.php')
+    final uri = ApiEndpoints.providers
         .replace(
           queryParameters: {
             if (countyId != null) 'county_id': '$countyId',

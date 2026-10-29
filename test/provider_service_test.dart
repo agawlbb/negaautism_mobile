@@ -12,7 +12,8 @@ void main() {
       final service = ProviderService(
         client: MockClient((request) async {
           expect(request.method, 'GET');
-          expect(request.url.path, '/api/get_providers.php');
+          expect(request.url.host, 'vps.negaautism.org');
+          expect(request.url.path, '/api/providers');
           expect(request.url.queryParameters, {
             'county_id': '2',
             'category_id': '3',

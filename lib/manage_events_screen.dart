@@ -1,3 +1,4 @@
+import 'api_endpoints.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'event_details_screen.dart';
@@ -13,7 +14,6 @@ class ManageEventsScreen extends StatefulWidget {
 }
 
 class _ManageEventsScreenState extends State<ManageEventsScreen> {
-  static const String _baseUrl = 'https://negaautism.org/api/get_events.php';
 
   EventsScope _scope = EventsScope.upcoming;
   bool _loading = false;
@@ -33,7 +33,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     });
 
     try {
-      final uri = Uri.parse('$_baseUrl?scope=${_scope == EventsScope.upcoming ? 'upcoming' : 'all'}');
+      final uri = ApiEndpoints.events.replace(queryParameters: {'scope': _scope == EventsScope.upcoming ? 'upcoming' : 'all'});
       final resp = await http.get(uri);
 
       if (resp.statusCode != 200) {
