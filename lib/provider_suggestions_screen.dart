@@ -10,7 +10,7 @@ class ProviderReviewResult {
   const ProviderReviewResult(this.fields, {this.savedMessage});
 }
 
-/// Explicit field selection keeps existing administrator input intact by default.
+/// Review and complete every editable provider field before saving.
 class ProviderSuggestionsScreen extends StatefulWidget {
   final ProviderSuggestions suggestions;
   final ProviderDirectory directory;
@@ -30,28 +30,32 @@ class ProviderSuggestionsScreen extends StatefulWidget {
 
 class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
   final _selected = <String>{};
+  final _form = GlobalKey<FormState>();
+  final _text = <String, TextEditingController>{};
+  final _choices = <String, int?>{};
   bool _saving = false;
   String? _error;
 
-  Map<String, dynamic> get _selectedFields => {
-    for (final key in _selected) key: widget.suggestions.fields[key],
+  Map<String, dynamic> get _fields => {
+    for (final entry in _text.entries) entry.key: entry.value.text,
+    ..._choices,
   };
 
   Future<void> _add() async {
-    if (_saving) return;
+    if (_saving || !_form.currentState!.validate()) return;
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      final message = await widget.onAdd!(_selectedFields);
+      final message = await widget.onAdd!(_fields);
       if (!mounted) return;
       setState(() => _saving = false);
       await WidgetsBinding.instance.endOfFrame;
       if (mounted) {
         Navigator.pop(
           context,
-          ProviderReviewResult(_selectedFields, savedMessage: message),
+          ProviderReviewResult(_fields, savedMessage: message),
         );
       }
     } catch (e) {
@@ -75,15 +79,134 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
   bool _hasValue(dynamic value) =>
       value != null && value.toString().trim().isNotEmpty;
 
+  List<ProviderChoice> _options(String key) => key == 'category_id'
+      ? widget.directory.categories
+      : widget.directory.counties;
+
+  int? _validChoice(String key, dynamic value) =>
+      _options(key).any((choice) => choice.id == value) ? value as int : null;
+
+  bool _normalizedWebsite() {
+    final current = providerWebsiteUri(
+      widget.current['website']?.toString() ?? '',
+    );
+    final suggested = providerWebsiteUri(
+      widget.suggestions.fields['website']?.toString() ?? '',
+    );
+    if (current == null || suggested == null || suggested.scheme != 'https') {
+      return false;
+    }
+    // Only select an equivalent URL (or its HTTPS upgrade), never another site,
+    // path, query, fragment or explicitly different port.
+    Uri canonical(Uri uri) =>
+        uri.replace(scheme: 'https', path: uri.path.isEmpty ? '/' : uri.path);
+    return canonical(current) == canonical(suggested);
+  }
+
   @override
   void initState() {
     super.initState();
     for (final key in labels.keys) {
-      if (_hasValue(widget.suggestions.fields[key]) &&
-          !_hasValue(widget.current[key])) {
+      final suggestion = widget.suggestions.fields[key];
+      final isChoice = key == 'category_id' || key == 'county_id';
+      final available = isChoice
+          ? _validChoice(key, suggestion) != null
+          : _hasValue(suggestion);
+      if (available &&
+          (!_hasValue(widget.current[key]) ||
+              (key == 'website' && _normalizedWebsite()))) {
         _selected.add(key);
       }
+      final value = _selected.contains(key) ? suggestion : widget.current[key];
+      if (isChoice) {
+        _choices[key] = _validChoice(key, value);
+      } else {
+        _text[key] = TextEditingController(text: value?.toString() ?? '');
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _text.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _select(String key, bool checked) {
+    setState(() {
+      if (checked) {
+        _selected.add(key);
+      } else {
+        _selected.remove(key);
+      }
+      final value = checked
+          ? widget.suggestions.fields[key]
+          : widget.current[key];
+      if (_text.containsKey(key)) {
+        _text[key]!.text = value?.toString() ?? '';
+      } else {
+        _choices[key] = _validChoice(key, value);
+      }
+    });
+  }
+
+  Widget _editor(String key, String label) {
+    if (_text.containsKey(key)) {
+      final limit = key == 'description'
+          ? 10000
+          : key == 'phone'
+          ? 50
+          : 255;
+      return TextFormField(
+        key: ValueKey('review-$key'),
+        controller: _text[key],
+        enabled: !_saving,
+        decoration: InputDecoration(labelText: label),
+        maxLength: limit,
+        maxLines: key == 'description' ? 4 : 1,
+        keyboardType: key == 'website'
+            ? TextInputType.url
+            : key == 'phone'
+            ? TextInputType.phone
+            : TextInputType.text,
+        onChanged: (_) => setState(() => _selected.remove(key)),
+        validator: (value) {
+          final text = (value ?? '').trim();
+          if (key == 'name' && text.isEmpty) return 'Enter a provider name';
+          if ((value ?? '').length > limit) {
+            return 'Use at most $limit characters';
+          }
+          if (key == 'website' &&
+              text.isNotEmpty &&
+              providerWebsiteUri(text) == null) {
+            return 'Enter an HTTP or HTTPS website';
+          }
+          return null;
+        },
+      );
+    }
+    return DropdownButtonFormField<int>(
+      key: ValueKey('review-$key:${_choices[key]}'),
+      initialValue: _choices[key],
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label),
+      items: _options(key)
+          .map(
+            (choice) =>
+                DropdownMenuItem(value: choice.id, child: Text(choice.name)),
+          )
+          .toList(),
+      onChanged: _saving
+          ? null
+          : (value) => setState(() {
+              _choices[key] = value;
+              _selected.remove(key);
+            }),
+      validator: (value) =>
+          value == null ? 'Choose a ${label.toLowerCase()}' : null,
+    );
   }
 
   String _display(String key, dynamic value) {
@@ -105,69 +228,87 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
     canPop: !_saving,
     child: Scaffold(
       appBar: AppBar(title: const Text('Review website suggestions')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Choose which suggestions to apply. Existing fields are unchecked by default. Add the provider here, or apply the selections to edit them in the provider form.',
-          ),
-          for (final entry in labels.entries)
-            if (_hasValue(widget.suggestions.fields[entry.key]))
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(entry.value),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _display(entry.key, widget.suggestions.fields[entry.key]),
+      body: Form(
+        key: _form,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Review and edit all provider details here, including anything the website did not supply. Existing values are kept unless selected or edited. Equivalent HTTPS website suggestions are selected automatically.',
+              ),
+              for (final entry in labels.entries) ...[
+                if (_hasValue(widget.suggestions.fields[entry.key]) &&
+                    (_text.containsKey(entry.key) ||
+                        _validChoice(
+                              entry.key,
+                              widget.suggestions.fields[entry.key],
+                            ) !=
+                            null))
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(entry.value),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _display(
+                            entry.key,
+                            widget.suggestions.fields[entry.key],
+                          ),
+                        ),
+                        if (_hasValue(widget.current[entry.key]))
+                          Text(
+                            'Current: ${_display(entry.key, widget.current[entry.key])}',
+                          ),
+                      ],
                     ),
-                    if (_hasValue(widget.current[entry.key]))
-                      Text(
-                        'Current: ${_display(entry.key, widget.current[entry.key])}',
-                      ),
-                  ],
+                    value: _selected.contains(entry.key),
+                    onChanged: _saving
+                        ? null
+                        : (checked) => _select(entry.key, checked == true),
+                  ),
+                _editor(entry.key, entry.value),
+                const SizedBox(height: 12),
+              ],
+              const Divider(),
+              const Text(
+                'Administrator review notes',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              if (_hasValue(widget.suggestions.fields['supporting_address']))
+                SelectableText(
+                  'Supporting address: ${widget.suggestions.fields['supporting_address']}',
                 ),
-                value: _selected.contains(entry.key),
-                onChanged: _saving
-                    ? null
-                    : (checked) => setState(() {
-                        if (checked == true) {
-                          _selected.add(entry.key);
-                        } else {
-                          _selected.remove(entry.key);
-                        }
-                      }),
+              for (final note in widget.suggestions.notes)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: SelectableText(note),
+                ),
+              const SizedBox(height: 12),
+              const Text(
+                'Sources',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-          const Divider(),
-          const Text(
-            'Administrator review notes',
-            style: TextStyle(fontWeight: FontWeight.bold),
+              for (final source in widget.suggestions.sources)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(source['field'] ?? ''),
+                      SelectableText(source['excerpt'] ?? ''),
+                      ProviderContactLinks(
+                        website: source['url'] ?? '',
+                        phone: '',
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
-          if (_hasValue(widget.suggestions.fields['supporting_address']))
-            SelectableText(
-              'Supporting address: ${widget.suggestions.fields['supporting_address']}',
-            ),
-          for (final note in widget.suggestions.notes)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: SelectableText(note),
-            ),
-          const SizedBox(height: 12),
-          const Text('Sources', style: TextStyle(fontWeight: FontWeight.bold)),
-          for (final source in widget.suggestions.sources)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(source['field'] ?? ''),
-                  SelectableText(source['excerpt'] ?? ''),
-                  ProviderContactLinks(website: source['url'] ?? '', phone: ''),
-                ],
-              ),
-            ),
-        ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -196,11 +337,9 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
               TextButton(
                 onPressed: _saving
                     ? null
-                    : () => Navigator.pop(
-                        context,
-                        ProviderReviewResult(_selectedFields),
-                      ),
-                child: const Text('Apply selected suggestions'),
+                    : () =>
+                          Navigator.pop(context, ProviderReviewResult(_fields)),
+                child: const Text('Apply changes to provider form'),
               ),
             ],
           ),

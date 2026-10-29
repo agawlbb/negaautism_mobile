@@ -93,6 +93,10 @@ void main() {
   testWidgets(
     'populated fields stay unchecked; notes and sources are separate',
     (tester) async {
+      tester.view.physicalSize = const Size(1000, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       ProviderReviewResult? selected;
       await tester.pumpWidget(
         MaterialApp(
@@ -129,20 +133,23 @@ void main() {
       expect(descriptionCheckbox.value, true);
       expect(find.text('Administrator review notes'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Apply selected suggestions'),
+        find.text('Apply changes to provider form'),
         250,
         scrollable: find
             .descendant(
-              of: find.byType(ListView),
+              of: find.byType(SingleChildScrollView),
               matching: find.byType(Scrollable),
             )
             .first,
       );
-      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -400),
+      );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Apply selected suggestions'));
+      await tester.tap(find.text('Apply changes to provider form'));
       await tester.pumpAndSettle();
-      expect(selected!.fields.containsKey('name'), false);
+      expect(selected!.fields['name'], 'Administrator name');
       expect(selected!.fields['description'], 'The clinic offers therapy.');
       expect(selected!.fields.containsKey('review_notes'), false);
       expect(selected!.fields.containsKey('sources'), false);

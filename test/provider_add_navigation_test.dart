@@ -228,31 +228,52 @@ void main() {
     },
   );
 
-  testWidgets(
-    'missing county prevents review add and still allows manual completion',
-    (tester) async {
-      var writes = 0;
-      final service = ProviderService(
-        client: MockClient((_) async {
-          writes++;
-          return http.Response('{}', 500);
-        }),
-      );
-      addTearDown(service.close);
-      await openForm(tester, service, missingCounty: true);
-      await openReview(tester);
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Add provider'));
-      await tester.pumpAndSettle();
-      expect(writes, 0);
-      expect(
-        find.textContaining('Select a category and county'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Apply selected suggestions'));
-      await tester.pumpAndSettle();
-      expect(find.byType(ProviderEditScreen), findsOneWidget);
-      expect(find.text('Review website suggestions'), findsNothing);
-      expect(find.text('Synthetic clinic'), findsOneWidget);
-    },
-  );
+  testWidgets('missing county can be completed and saved directly in review', (
+    tester,
+  ) async {
+    var writes = 0;
+    final service = ProviderService(
+      client: MockClient((request) async {
+        writes++;
+        final data = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(data['county_id'], 2);
+        expect(data['name'], 'Corrected clinic');
+        expect(data['phone_number'], '706-555-0199');
+        expect(data['description'], 'Edited description.');
+        return http.Response(
+          jsonEncode({'success': true, 'message': 'Added.'}),
+          200,
+        );
+      }),
+    );
+    addTearDown(service.close);
+    await openForm(tester, service, missingCounty: true);
+    await openReview(tester);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Add provider'));
+    await tester.pumpAndSettle();
+    expect(writes, 0);
+    expect(find.text('Choose a county'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Provider name'),
+      'Corrected clinic',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Phone'),
+      '706-555-0199',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Description'),
+      'Edited description.',
+    );
+    await tester.tap(find.text('County'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Multiple').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Add provider'));
+    await tester.pumpAndSettle();
+    expect(writes, 1);
+    expect(find.text('Provider directory'), findsOneWidget);
+    expect(find.byType(ProviderEditScreen), findsNothing);
+    expect(find.text('Review website suggestions'), findsNothing);
+  });
 }

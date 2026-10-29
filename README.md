@@ -63,13 +63,17 @@ is based on fetched `origin/master` at `1c08e78`. The app sends a fresh Firebase
 manager token, website URL and existing category/county choices. The VPS reads
 relevant linked pages and returns suggestions; no hosted backend change is needed.
 
-Administrators explicitly select suggestions to apply. Populated fields start
-unchecked and remain unchanged unless selected. The resulting form stays editable.
-The AI review screen offers **Add provider** to save the current fields plus
-selected suggestions through the existing hosted API and approval process.
+The AI review is a complete editable provider form: name, description, website,
+phone, category and county are always available, even when extraction returns
+no value. Existing values are retained unless selected or edited. An equivalent
+HTTPS website suggestion (such as justpeople.org to https://justpeople.org) is
+selected automatically; a different website or page is not.
+The AI review screen validates required fields before **Add provider** saves
+the reviewed form through the existing hosted API and approval process.
 Successful adds close both review and entry screens and return to the directory.
-**Apply selected suggestions** remains available for manual corrections before
-adding. The manual form also returns to the directory after a successful add.
+**Apply changes to provider form** transfers all reviewed edits back to the
+entry form, including cleared optional fields. The manual form also returns
+to the directory after a successful add.
 Incomplete or failed adds stay open; database writes are never automatically
 retried, and private review notes/sources are never submitted. Website
 assistance applies to new entries, preserving the existing edit workflow.
