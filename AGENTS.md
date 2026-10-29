@@ -31,3 +31,12 @@
 - Real Firebase client configuration is ignored and supplied locally. Commit only
   the placeholder example. Keep private recovery files outside source checkouts.
 - Run the local checks in `docs/public-source-review.md` before republishing source.
+
+## Fresh source repository
+
+- The canonical GitHub URL above now identifies a fresh independent repository
+  containing only scrubbed history. Keep it private pending explicit user approval.
+- The former GitHub repository and its issue tracker are retained privately at
+  `agawlbb/negaautism_mobile-private-archive-20261029`. Never publish that archive,
+  push it into the canonical repository, or use it as an active workspace.
+- Follow `docs/repository-migration.md` when resuming work in an older clone.

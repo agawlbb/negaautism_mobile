@@ -28,7 +28,8 @@ illustration has no EXIF/XMP payload. Application source, tests, dependency lock
 package identities and useful commit history are preserved. Only a source-code
 comment using a personal-domain example was generalized.
 
-The GitHub review found one branch, no tags, no pull requests, no releases,
+The original GitHub repository review found one branch, no tags, no pull requests,
+no releases,
 no Actions runs/artifacts/caches/workflows, no deployments, no webhooks, no forks,
 and disabled wiki/discussions. Eight issues contain task titles only, with no
 bodies or comments. No sensitive issue content required editing.
@@ -47,9 +48,12 @@ the private commit map as needed. Do not blindly pull or force push old branches
 Existing app identifiers, public service endpoints and public GitHub handles are
 retained because they are application identity/configuration rather than secrets.
 
-History rewriting cannot revoke previously downloaded copies or guarantee removal
-of GitHub-retained old commit objects/caches. The repository stays private. Do not
-reopen it publicly without accounting for those residual copies.
+History rewriting cannot revoke previously downloaded copies. GitHub retained old
+unreferenced commit objects in the original repository, so the scrubbed history
+was moved into a newly created, independent private repository. The source URL
+remains https://github.com/agawlbb/negaautism_mobile. The original repository is
+kept privately at https://github.com/agawlbb/negaautism_mobile-private-archive-20261029.
+Do not publish the archive. See repository-migration.md for the migration checks.
 
 ## Local checks
 
