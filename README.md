@@ -48,6 +48,24 @@ it does not establish Android build compatibility or update installed apps.
 
 ## Getting Started
 
+### Android emulator build (October 29, 2026)
+
+The provider-directory branch builds with Flutter 3.47.8 / Dart 3.13.7,
+JDK 17, AGP 8.11.1, Kotlin 2.2.20 and the existing Gradle 8.14.6 wrapper.
+Use JDK 17 explicitly when invoking Gradle; Android Studio's installed JBR 25
+is incompatible with this wrapper. After resolving the committed lockfile with
+the patched Flutter SDK and setting its path in ignored `android/local.properties`:
+
+```powershell
+$env:JAVA_HOME = '<JDK 17 installation>'
+.\android\gradlew.bat -p android assembleDebug -Ptarget-platform=android-x64
+```
+
+The debug APK is `build/app/outputs/apk/debug/app-debug.apk`. This is an emulator
+development build, not a production release. Shared SDKs, Firebase package
+versions and production services are unchanged. The earlier no-build record
+above is historical; this local debug build was explicitly authorized.
+
 This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:

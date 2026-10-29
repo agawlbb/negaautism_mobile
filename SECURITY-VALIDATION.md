@@ -1,5 +1,32 @@
 # Security validation
 
+## October 29, 2026 - provider branch Android emulator build
+
+The user explicitly authorized an Android build and emulator installation from
+feature/provider-directory. Flutter 3.47.8 (official tag 737ba8f885) / Dart 3.13.7
+was installed as isolated ignored build tooling; shared Flutter installations
+were not modified. Exact dependency resolution with --enforce-lockfile passed.
+The committed package lockfile and Firebase package versions remain unchanged.
+
+The patched SDK rejected AGP 8.6.0. Both AGP declarations now use 8.11.1 and
+Kotlin uses 2.2.20, compatible with AGP 8.11.1 and Gradle 8.14.6. The existing
+patched Gradle wrapper and minimum Android API 23 remain unchanged. Generated
+Android build reports and Kotlin caches are ignored.
+
+assembleDebug -Ptarget-platform=android-x64 passed under JDK 17 (195 tasks).
+Flutter's default selection of Android Studio JBR 25 failed; direct Gradle
+invocation with JAVA_HOME selecting JDK 17 succeeded without changing global
+Flutter configuration or bypassing dependency validation. Flutter's automatic
+source migrations were reverted before the successful build.
+
+The resulting debug APK was installed on CoffeyTable_Pixel_8_API_36
+(emulator-5554). The launcher org.negaautism.mobileapp/.MainActivity opened,
+and Browse providers displayed live provider entries and the search/filter UI.
+No login, provider save, notification authorization, production deployment or
+release distribution was performed. This establishes local debug/emulator
+compatibility, not release-mode or physical-device validation. Existing
+toolchain/NDK deprecation warnings remain for later maintenance.
+
 ## October 29, 2026 - provider feature validation (no Android build)
 
 Resolved dependencies offline using Flutter 3.47.8 / Dart 3.13.7 in the VPS
