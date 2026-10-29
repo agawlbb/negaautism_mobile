@@ -17,6 +17,11 @@ See [security validation](SECURITY-VALIDATION.md) for the exact validation limit
 
 ## Provider directory
 
+The home screen uses the website's teal/cream palette and rainbow branding,
+with its `img/child_reading.webp` illustration bundled locally as
+`assets/images/child_reading.webp`. The image is available offline and stays on
+the home screen when the provider directory opens.
+
 `Browse providers` is available without signing in. Search by name or description,
 filter by county/category, and expand a provider to view their description,
 phone and website. County filtering includes providers serving multiple counties.

@@ -1,15 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
 import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messaging
+
 import 'login_screen.dart'; // Import the LoginScreen
 import 'user_info_service.dart'; // Import the UserInfoService
 import 'notifications_screen.dart'; // Import the NotificationsScreen
+
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'manage_events_screen.dart'; // <-- NEW: Manage Events screen
+
 import 'providers_screen.dart';
+import 'home_landing.dart';
+import 'website_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +29,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomeScreen(),
-    );
+    return MaterialApp(theme: websiteTheme(), home: const HomeScreen());
   }
 }
 
@@ -73,7 +77,9 @@ class HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(message.notification?.title ?? "Notification"),
-          content: Text(message.notification?.body ?? "You have a new notification."),
+          content: Text(
+            message.notification?.body ?? "You have a new notification.",
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -105,9 +111,8 @@ class HomeScreenState extends State<HomeScreen> {
       } else {
         // Display the error message instead of rethrowing
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: $e')));
         }
       }
     }
@@ -119,7 +124,8 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _setUserName() async {
-    final userInfo = await _userInfoService.getUserInfoFromPreferences(); // Load from SharedPreferences
+    final userInfo = await _userInfoService
+        .getUserInfoFromPreferences(); // Load from SharedPreferences
     if (mounted) {
       setState(() {
         _userInfoDisplay = 'Welcome ${userInfo['username']}';
@@ -197,18 +203,13 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _openManagerEvents() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ManageEventsScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: websiteBrandGradient),
+        ),
         title: const Text('negaautism.org Mobile'),
         actions: [
           PopupMenuButton<String>(
@@ -220,7 +221,9 @@ class HomeScreenState extends State<HomeScreen> {
               } else if (value == 'notifications') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsScreen(),
+                  ),
                 );
               }
             },
@@ -240,71 +243,13 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Aligns to the left
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0), // Padding around the text
-            child: Text(
-              _userInfoDisplay ?? '', // Display user info at the top left
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProvidersScreen()),
-                ),
-                icon: const Icon(Icons.business),
-                label: const Text('Browse providers'),
-              ),
-            ),
-          ),
-          // Full-width pink "Manager events" button under the welcome line
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _openManagerEvents, // opens the new screen
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  'Manager events',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          Expanded(
-            child: Center(
-              child: _user == null
-                  ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('You are not logged in.'), // Display the message
-                  const SizedBox(height: 16), // Add space between the text and button
-                  ElevatedButton(
-                    onPressed: () {
-                      _onLogin();
-                    },
-                    child: const Text('Login'), // Display login button
-                  ),
-                ],
-              )
-                  : const SizedBox.shrink(),
-            ),
-          ),
-        ],
+      body: HomeLanding(
+        welcome: _userInfoDisplay,
+        onBrowse: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProvidersScreen()),
+        ),
+        onLogin: _user == null ? _onLogin : null,
       ),
     );
   }
