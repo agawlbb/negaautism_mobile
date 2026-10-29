@@ -164,11 +164,16 @@ Android requires the usual local SDK/Flutter paths in `android/local.properties`
 The Gradle wrapper files are ignored by the original project; Flutter tooling
 creates them during Android setup/build. Do not commit local SDK configuration.
 
-The included `android/app/google-services.json` is Firebase **client** configuration,
-not a service-account credential. Forks must replace it with the client configuration
-for their own Firebase project and matching Android package. Client configuration
+Provide your own ignored `android/app/google-services.json` Firebase client configuration,
+using `android/app/google-services.json.example` as a structural example. Download
+the real file
+from your own Firebase project for the matching Android package. Client configuration
 does not authorize access: enforce backend token/claim checks and Firebase rules.
 Never add service-account JSON, server API keys, signing keys, or passwords.
+
+The real Firebase client configuration is deliberately excluded from all published
+history. Keep an external private copy for local builds. The example contains
+placeholders and cannot connect to Firebase as supplied.
 
 The app talks to the NEGA website API and its provider-assistance service. Those
 services and their credentials are configured and deployed separately; a fork

@@ -1,0 +1,17 @@
+title = "Mobile source privacy checks"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "personal-email"
+description = "Email address outside example domains or GitHub noreply"
+regex = '''(?i)\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.(?:com|org|net|edu|gov|io|me|co|us|uk|dev|info|biz)\b'''
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''(?i)^[A-Za-z0-9._%+-]+@(?:users\.noreply\.github\.com|(?:[A-Za-z0-9-]+\.)*example\.(?:com|org|net|invalid))$''']
+
+[[rules]]
+id = "personal-home-directory"
+description = "User-specific local home directory"
+regex = '''(?i)(?:\b[A-Z]:[\\/]+Users[\\/]+[^\\/<>\r\n"']+[\\/]|/(?:home|Users)/[A-Za-z0-9._-]+/)'''

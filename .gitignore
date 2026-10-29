@@ -63,3 +63,10 @@ app.*.map.json
 *.ipa
 /private/
 /secrets/
+
+# Local Firebase client configuration; publish only the example
+/android/app/google-services.json
+**/GoogleService-Info.plist
+/firebase_options.dart
+/lib/firebase_options.dart
+/privacy-audit-output/
