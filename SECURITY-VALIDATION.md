@@ -1,3 +1,27 @@
+## October 29, 2026 — first iOS TestFlight build
+
+The user authorized GitHub Mac runners and TestFlight publication. Version
+2.1.0/build 3 was built on the xcode-27 runner with Flutter 3.47.8/Dart 3.13.7.
+Run 40959517253 passed analysis, the Flutter tests, six synthetic signing checks,
+archive/export, strict exported signature and distribution-profile verification,
+and App Store Connect upload. iOS 15 is the SDK minimum. CocoaPods is selected
+for the existing pinned Firebase plugins after automatic SwiftPM migration failed;
+Firebase package versions and Android configuration are preserved.
+
+Private Firebase iOS configuration, the dedicated upload key and the explicitly
+approved reused distribution certificate are encrypted GitHub Actions secrets.
+They are reconstructed only on the ephemeral runner and cleaned after the job.
+The manual workflow validates the signed app identity, team, build, profile,
+production push entitlement and bundled Firebase identity before uploading.
+Publishing source does not trigger a build or upload. No public App Store release
+was submitted, and no real provider/notification operation was used as a test.
+
+Apple completed processing with build state VALID and internal status
+IN_BETA_TESTING. Version 2.1.0 (3) is assigned to the approved two-person Family
+testers internal group. No external beta or public App Store submission was made.
+Physical iPhone acceptance and Firebase APNs provider configuration remain pending;
+source/signature checks do not prove push delivery or device behavior.
+
 # Security validation
 
 ## October 29, 2026 - provider branch Android emulator build

@@ -32,9 +32,9 @@ notifications. Do not send real notifications as a build validation step.
 
 ## Build and distribute
 
-Run **iOS build and TestFlight** from Actions with publish disabled for analysis,
-synthetic tests, and an unsigned device build. Enable publish for a signed IPA
-and App Store Connect upload after the first build succeeds. The build number
+Run **iOS build and TestFlight** from Actions with publish enabled for analysis,
+synthetic tests, signed IPA verification and App Store Connect upload. Disabling
+publish provides an optional unsigned compilation check. The build number
 uses the monotonically increasing GitHub workflow run number. Start a new run
 for each upload; rerunning a previously delivered run repeats its build number.
 Flutter 3.47.8 preserves the repository's required security floor.
@@ -60,7 +60,8 @@ directory browsing, logo picker and notification permissions/token registration.
   same bundle ID. Configuration downloaded through the explicitly approved Chrome fallback and stored as an encrypted Actions secret.
 - Dedicated upload key form prepared as NEGA Autism CI with Developer access;
   created by the user as Z8RDRFJ7SN; the downloaded key is validated and stored as an encrypted Actions secret.
-- No Mac build or TestFlight upload has run. There are no uploaded builds yet.
+- First successful signed build/upload: version 2.1.0 (3), run 40959517253.
+  See delivery evidence below.
 
 - Reuse of Alarm Beans' distribution certificate/password was explicitly approved;
   encrypted copies are configured only in NEGA's Actions secrets. Original files
@@ -81,3 +82,27 @@ uses its existing CocoaPods plugin integration, preserving Firebase versions.
 Flutter 3.47.8 requires iOS 15; the project, Podfile and app framework now agree.
 The app uses standard HTTPS/Firebase encryption and declares no non-exempt
 cryptography. No custom encryption implementation is introduced.
+
+## First iOS delivery
+
+- Source: b055ba7, version 2.1.0, build 3, iOS 15 minimum.
+- GitHub Mac run: https://github.com/agawlbb/negaautism_mobile/actions/runs/40959517253
+- Flutter analysis and all Flutter tests passed, as did six synthetic signing
+  configuration checks. The archive and 24.4 MB IPA were exported successfully.
+- Strict signature verification passed along with app/team/build identity,
+  distribution profile, production push entitlement and Firebase app checks.
+- Apple upload succeeded without errors at 2026-10-29 21:45:40 UTC,
+  delivery UUID 5698abe2-3d7f-4996-8b17-9734c875e58d.
+- The user approved an internal NEGA Family testers group with the same two
+  people as the other app's group, including the required NEGA app access.
+  Existing access and role were preserved. Testers were added through Apple's
+  UI; internal beta tester records are app-specific and cannot be copied by ID.
+- NEGA group ID: c5aba762-58f3-41d7-bf03-b7c1fffa240c.
+- Apple processing completed successfully: upload COMPLETE, build VALID,
+  non-exempt encryption false, internal state IN_BETA_TESTING. Build 2.1.0 (3)
+  is assigned to Family testers with two approved internal testers.
+- Firebase messaging API is enabled. No development/production APNs auth key
+  or APNs certificate is configured for the new iOS app yet. Push delivery
+  requires that separate configuration; enabling the signing entitlement alone
+  does not configure Firebase's connection to Apple. No real notifications were
+  sent. Physical iPhone acceptance remains a tester task.
