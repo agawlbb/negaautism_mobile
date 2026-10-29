@@ -3,7 +3,9 @@ import base64
 import os
 from pathlib import Path
 import plistlib
+import datetime
 import re
+import uuid
 import secrets
 import shutil
 import subprocess
@@ -33,31 +35,45 @@ def preflight():
     missing = [key for key in required if not os.environ.get(key)]
     if missing:
         raise SystemExit('Missing GitHub Actions secrets: ' + ', '.join(missing))
+    if os.environ.get('PUBLISH') == 'true':
+        if not re.fullmatch(r'[A-Z0-9]{10}', os.environ['ASC_KEY_ID']):
+            raise SystemExit('Invalid App Store Connect key ID')
+        try:
+            uuid.UUID(os.environ['ASC_ISSUER_ID'])
+        except ValueError:
+            raise SystemExit('Invalid App Store Connect issuer ID') from None
 
 def configure():
     preflight()
     firebase = decode('FIREBASE_IOS_PLIST_BASE64')
     config = plistlib.loads(firebase)
     bundle = config['BUNDLE_ID']
-    if not re.fullmatch(r'[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+', bundle):
-        raise SystemExit('Invalid Firebase bundle ID')
+    if bundle != 'org.negaautism.mobile':
+        raise SystemExit('Firebase configuration must belong to org.negaautism.mobile')
     if not all(config.get(key) for key in ('GOOGLE_APP_ID', 'API_KEY', 'PROJECT_ID')):
         raise SystemExit('Firebase iOS configuration is incomplete')
     FIREBASE.write_bytes(firebase)
     project = ROOT / 'ios/Runner.xcodeproj/project.pbxproj'
-    text = project.read_text().replace('com.coffeybean.negaausismmobile.negaautismMobile', bundle)
+    text = project.read_text()
     if os.environ.get('PUBLISH') == 'true':
         profile_file = TEMP / 'distribution.mobileprovision'
         profile_file.write_bytes(decode('IOS_PROFILE_BASE64'))
         profile = plistlib.loads(run('security', 'cms', '-D', '-i', str(profile_file)))
+        expires = profile['ExpirationDate'].replace(tzinfo=datetime.timezone.utc)
+        if expires <= datetime.datetime.now(datetime.timezone.utc):
+            raise SystemExit('Provisioning profile has expired')
         team = profile['TeamIdentifier'][0]
         entitlements = profile['Entitlements']
         if entitlements['application-identifier'] != team + '.' + bundle:
             raise SystemExit('Provisioning profile does not match Firebase bundle ID')
-        if profile.get('ProvisionedDevices') or profile.get('ProvisionsAllDevices'):
+        if (profile.get('ProvisionedDevices') or profile.get('ProvisionsAllDevices')
+                or entitlements.get('get-task-allow')):
             raise SystemExit('An App Store distribution profile is required')
         if entitlements.get('aps-environment') != 'production':
             raise SystemExit('Enable Push Notifications on the App ID and regenerate the profile')
+        (ROOT / 'ios/Runner/Runner.entitlements').write_bytes(plistlib.dumps({
+            'aps-environment': 'production',
+        }))
         profiles = Path.home() / 'Library/MobileDevice/Provisioning Profiles'
         profiles.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(profile_file, profiles / (profile['UUID'] + '.mobileprovision'))
