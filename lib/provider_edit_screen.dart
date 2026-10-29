@@ -51,8 +51,12 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     _website = TextEditingController(text: p?.website);
     _description = TextEditingController(text: p?.description);
     _phone = TextEditingController(text: p?.phone);
-    _category = p?.categoryId;
-    _county = p?.countyId;
+    _category = widget.directory.categories.any((c) => c.id == p?.categoryId)
+        ? p?.categoryId
+        : null;
+    _county = widget.directory.counties.any((c) => c.id == p?.countyId)
+        ? p?.countyId
+        : null;
   }
 
   @override

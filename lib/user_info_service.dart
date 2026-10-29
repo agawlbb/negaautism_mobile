@@ -1,74 +1,62 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'vps_api.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserInfoService {
-  // Fetches user info from the API and stores it in SharedPreferences
+  final VpsApi? api;
+  UserInfoService({this.api});
+  // The VPS client validates sign-in and refreshes the token for this request.
   Future<void> fetchAndStoreUserInfo() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final User? user = auth.currentUser;
-
-    if (user != null) {
-      try {
-        String? idToken = await user.getIdToken();
-        if (idToken != null) {
-          // Make API call
-          final response = await http.post(
-            Uri.parse('https://negaautism.org/api/get_user_info.php'),
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: {'idToken': idToken},
-          );
-
-          if (response.statusCode == 200) {
-            final Map<String, dynamic> data = jsonDecode(response.body);
-            if (!data.containsKey('error')) {
-              // Save the user info in SharedPreferences
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              await prefs.setString('username', data['username']);
-              await prefs.setString('email', data['email']);
-              await prefs.setString('user_type', data['user_type']);
-              await prefs.setString('specialty', data['specialty'] ?? '');
-              await prefs.setString('clinic', data['clinic'] ?? '');
-
-              // Save allowed_notifications as a JSON string
-              Map<String, String> notifications = Map<String, String>.from(data['allowed_notifications']);
-              await prefs.setString('allowed_notifications', jsonEncode(notifications));
-            } else {
-              throw Exception('Error fetching user info: ${data['error']}');
-            }
-          } else {
-            throw Exception('Failed to fetch user info: ${response.body}');
-          }
-        } else {
-          throw Exception('ID token is null.');
-        }
-      } catch (e) {
-        throw Exception('Error fetching user info: $e');
+    final api = this.api ?? VpsApi();
+    try {
+      final data = await api.request('GET', 'me');
+      final preferences = await SharedPreferences.getInstance();
+      for (final key in [
+        'username',
+        'email',
+        'user_type',
+        'specialty',
+        'clinic',
+      ]) {
+        await preferences.setString(key, data[key] as String? ?? '');
       }
-    } else {
-      throw Exception('User is not authenticated.');
+      final notifications = Map<String, String>.from(
+        data['allowed_notifications'] as Map,
+      );
+      await preferences.setString(
+        'allowed_notifications',
+        jsonEncode(notifications),
+      );
+    } finally {
+      if (this.api == null) api.close();
     }
   }
 
   Future<Map<String, String?>> getUserInfoFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return {
-      'username': prefs.getString('username') ?? 'unknown user', // Default to "unknown user"
+      'username':
+          prefs.getString('username') ??
+          'unknown user', // Default to "unknown user"
       'email': prefs.getString('email') ?? '', // Default to empty string
-      'user_type': prefs.getString('user_type') ?? '', // Default to empty string
-      'specialty': prefs.getString('specialty') ?? '', // Default to empty string
+      'user_type':
+          prefs.getString('user_type') ?? '', // Default to empty string
+      'specialty':
+          prefs.getString('specialty') ?? '', // Default to empty string
       'clinic': prefs.getString('clinic') ?? '', // Default to empty string
     };
   }
-
 
   // Retrieves allowed notifications from SharedPreferences
   Future<Map<String, String>> getAllowedNotifications() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? notificationsString = prefs.getString('allowed_notifications');
     if (notificationsString != null) {
-      Map<String, String> notifications = Map<String, String>.from(jsonDecode(notificationsString));
+      Map<String, String> notifications = Map<String, String>.from(
+        jsonDecode(notificationsString),
+      );
       return notifications;
     }
     return {};

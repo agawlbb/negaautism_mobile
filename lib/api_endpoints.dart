@@ -1,5 +1,7 @@
-/// VPS read endpoints. Hosted writes migrate in the next implementation slice.
+/// All mobile HTTP API routes use the same VPS origin.
 class ApiEndpoints {
-  static final providers = Uri.https('vps.negaautism.org', '/api/providers');
-  static final events = Uri.https('vps.negaautism.org', '/api/events');
+  static Uri uri(String path, {Map<String, String>? query}) =>
+      Uri.https('vps.negaautism.org', '/api/$path', query);
+  static final providers = uri('providers');
+  static final events = uri('events');
 }

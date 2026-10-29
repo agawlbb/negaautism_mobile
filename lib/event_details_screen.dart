@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
+
+import 'vps_api.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   const EventDetailsScreen({
@@ -26,7 +25,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   late final TextEditingController _addressCtrl; // NEW
   late final TextEditingController _websiteCtrl; // NEW
 
-  final _auth = FirebaseAuth.instance;
+  final _api = VpsApi();
   bool _submitting = false;
 
   bool get _isEditMode => widget.initial != null;
@@ -46,6 +45,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   @override
   void dispose() {
+    _api.close();
     _nameCtrl.dispose();
     _descCtrl.dispose();
     _timeCtrl.dispose();
@@ -102,6 +102,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<void> _handleSave() async {
+    if (_submitting) return;
     if (!_formKey.currentState!.validate()) return;
     if (_isEditMode) {
       await _submitEdit();
@@ -113,16 +114,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Future<void> _submitAdd() async {
     setState(() => _submitting = true);
     try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception('Not authenticated.');
-      final idToken = await user.getIdToken(true);
-
-      final uri = Uri.parse('https://negaautism.org/api/add_event.php');
-      final resp = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      final data = await _api.request(
+        'POST',
+        'events',
         body: {
-          'id_token': idToken,
           'name': _nameCtrl.text.trim(),
           'description': _descCtrl.text.trim(),
           'event_date': _yyyyMmDd(_eventDate),
@@ -132,8 +127,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           'website': _normalizeWebsite(_websiteCtrl.text), // normalized
         },
       );
-
-      final data = json.decode(resp.body);
       if (data['success'] != true) throw Exception(data['message']);
 
       if (!mounted) return;
@@ -157,17 +150,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
     setState(() => _submitting = true);
     try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception('Not authenticated.');
-      final idToken = await user.getIdToken(true);
-
-      final uri = Uri.parse('https://negaautism.org/api/edit_event.php');
-      final resp = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      final data = await _api.request(
+        'PUT',
+        'events/${init.id}',
         body: {
-          'id_token': idToken,
-          'id': init.id.toString(),
           'name': _nameCtrl.text.trim(),
           'description': _descCtrl.text.trim(),
           'event_date': _yyyyMmDd(_eventDate),
@@ -177,8 +163,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           'website': _normalizeWebsite(_websiteCtrl.text), // normalized
         },
       );
-
-      final data = json.decode(resp.body);
       if (data['success'] != true) throw Exception(data['message']);
 
       if (!mounted) return;
@@ -202,7 +186,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       builder: (_) => AlertDialog(
         title: const Text('Confirm Delete'),
         content: const Text(
-            'Are you sure you want to delete this event? This cannot be undone.'),
+          'Are you sure you want to delete this event? This cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -227,21 +212,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
     setState(() => _submitting = true);
     try {
-      final user = _auth.currentUser;
-      if (user == null) throw Exception('Not authenticated.');
-      final idToken = await user.getIdToken(true);
-
-      final uri = Uri.parse('https://negaautism.org/api/delete_event.php');
-      final resp = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'id_token': idToken,
-          'id': init.id.toString(),
-        },
-      );
-
-      final data = json.decode(resp.body);
+      final data = await _api.request('DELETE', 'events/${init.id}');
       if (data['success'] != true) throw Exception(data['message']);
 
       if (!mounted) return;
@@ -261,7 +232,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   String _dateLabel(DateTime d) {
     const months = [
-      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
@@ -297,7 +279,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
 
@@ -411,8 +393,8 @@ class EditableEvent {
   final DateTime eventDate;
   final String eventTime;
   final String location; // optional in UI; empty string is fine
-  final String address;  // NEW
-  final String website;  // NEW
+  final String address; // NEW
+  final String website; // NEW
 
   EditableEvent({
     this.id,
@@ -421,7 +403,7 @@ class EditableEvent {
     required this.eventDate,
     required this.eventTime,
     required this.location,
-    required this.address,   // NEW
-    required this.website,   // NEW
+    required this.address, // NEW
+    required this.website, // NEW
   });
 }

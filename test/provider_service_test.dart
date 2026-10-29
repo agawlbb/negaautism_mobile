@@ -54,15 +54,15 @@ void main() {
     },
   );
 
-  test('save uses JSON token and only supported editable fields', () async {
+  test('save uses bearer token and only supported editable fields', () async {
     final service = ProviderService(
       client: MockClient((request) async {
-        expect(request.method, 'POST');
-        expect(request.url.path, '/api/save_provider.php');
+        expect(request.method, 'PUT');
+        expect(request.url.host, 'vps.negaautism.org');
+        expect(request.url.path, '/api/providers/7');
+        expect(request.headers['Authorization'], 'Bearer synthetic-token');
         expect(request.url.query, isEmpty);
         expect(jsonDecode(request.body), {
-          'idToken': 'synthetic-token',
-          'id': 7,
           'name': 'New name',
           'website': '',
           'description': 'Synthetic description',

@@ -62,8 +62,9 @@ void main() {
           startsWith('multipart/form-data; boundary='),
         );
         final body = latin1.decode(request.bodyBytes);
-        expect(body, contains('name="idToken"'));
-        expect(body, contains('synthetic-token'));
+        expect(body, isNot(contains('name="idToken"')));
+        expect(request.headers['Authorization'], 'Bearer synthetic-token');
+        expect(body, isNot(contains('synthetic-token')));
         expect(body, contains('name="logo"; filename="logo.png"'));
         expect(body, contains(latin1.decode(png())));
         expect(body, isNot(contains('review_notes')));

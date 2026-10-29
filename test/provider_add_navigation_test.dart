@@ -145,7 +145,7 @@ void main() {
     );
     expect(requests.single['name'], 'Synthetic clinic');
     expect(requests.single['description'], 'The clinic provides therapy.');
-    expect(requests.single['idToken'], 'synthetic-manager-token');
+    expect(requests.single.containsKey('idToken'), isFalse);
     expect(requests.single.containsKey('review_notes'), false);
     expect(requests.single.containsKey('sources'), false);
     expect(requests.single.containsKey('supporting_address'), false);

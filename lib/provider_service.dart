@@ -1,4 +1,5 @@
 import 'api_endpoints.dart';
+
 import 'dart:convert';
 
 import 'provider_logo.dart';
@@ -106,7 +107,6 @@ class ProviderApiException implements Exception {
 class ProviderService {
   final http.Client _client;
   ProviderService({http.Client? client}) : _client = client ?? http.Client();
-  static final _base = Uri.parse('https://negaautism.org/api/');
 
   Map<String, dynamic> _response(http.Response response) {
     if (response.statusCode == 404) {
@@ -141,13 +141,12 @@ class ProviderService {
   }
 
   Future<ProviderDirectory> load({int? countyId, int? categoryId}) async {
-    final uri = ApiEndpoints.providers
-        .replace(
-          queryParameters: {
-            if (countyId != null) 'county_id': '$countyId',
-            if (categoryId != null) 'category_id': '$categoryId',
-          },
-        );
+    final uri = ApiEndpoints.providers.replace(
+      queryParameters: {
+        if (countyId != null) 'county_id': '$countyId',
+        if (categoryId != null) 'category_id': '$categoryId',
+      },
+    );
     final response = await _client
         .get(uri)
         .timeout(const Duration(seconds: 20));
@@ -169,8 +168,6 @@ class ProviderService {
       throw const ProviderApiException('Sign in to manage providers.');
     }
     final fields = <String, dynamic>{
-      'idToken': token,
-      if (id != null) 'id': id,
       'name': name.trim(),
       'website': website.trim(),
       'description': description.trim(),
@@ -179,26 +176,32 @@ class ProviderService {
       'county_id': countyId,
     };
     // Never retry a write automatically: a timeout may follow a successful save.
+    final uri = id == null
+        ? ApiEndpoints.providers
+        : ApiEndpoints.uri('providers/$id');
+    final method = id == null ? 'POST' : 'PUT';
+    final headers = {'Authorization': 'Bearer $token'};
     final http.Response response;
     if (logo == null) {
       response = await _client
-          .post(
-            _base.resolve('save_provider.php'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(fields),
+          .send(
+            http.Request(method, uri)
+              ..headers.addAll({...headers, 'Content-Type': 'application/json'})
+              ..body = jsonEncode(fields),
           )
+          .then(http.Response.fromStream)
           .timeout(const Duration(seconds: 20));
     } else {
-      final request =
-          http.MultipartRequest('POST', _base.resolve('save_provider.php'))
-            ..fields.addAll(fields.map((key, value) => MapEntry(key, '$value')))
-            ..files.add(
-              http.MultipartFile.fromBytes(
-                'logo',
-                logo.bytes,
-                filename: logo.filename,
-              ),
-            );
+      final request = http.MultipartRequest(method, uri)
+        ..headers.addAll(headers)
+        ..fields.addAll(fields.map((key, value) => MapEntry(key, '$value')))
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            'logo',
+            logo.bytes,
+            filename: logo.filename,
+          ),
+        );
       response = await (() async => http.Response.fromStream(
         await _client.send(request),
       ))().timeout(const Duration(seconds: 20));

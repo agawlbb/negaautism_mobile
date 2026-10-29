@@ -186,3 +186,23 @@ install, or deploy an application. When distributing binaries, provide the exact
 corresponding source, including your changes, under the project license.
 
 See [public-source review](docs/public-source-review.md) for this publication audit.
+
+## VPS API and native admin work in progress
+
+`feature/vps-admin-api` migrates provider reads/saves, event reads/writes, profile
+loading and notification registration to one VPS HTTP origin. Firebase sign-in
+and FCM delivery remain direct SDK integrations. Provider logos remain hosted on
+the website; the VPS forwards validated saves to its existing upload endpoint.
+The extraction WebSocket remains for website-assistance progress and reconnects.
+
+A server-verified Admin menu exposes provider/review queues, provider add/edit,
+category/county editing and moderator event management according to permissions.
+Admin is derived from any existing management/moderator permission, matching the
+website. Every mutation is independently authorized by the backend. Failed saves
+retain editable state; writes are not automatically retried. API clients reject
+responses if the signed-in account changed while a request was in flight.
+
+User management, provider deletion, PDFs and category-logo uploads are outstanding.
+Do not distribute this source before the VPS endpoints and database configuration
+are separately deployed and validated. No app builds, installation or hosting
+changes accompany this source checkpoint.

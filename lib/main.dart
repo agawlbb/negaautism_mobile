@@ -1,3 +1,8 @@
+import 'dart:async';
+
+import 'admin_screen.dart';
+import 'vps_api.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -40,12 +45,16 @@ class HomeScreen extends StatefulWidget {
   HomeScreenState createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserInfoService _userInfoService = UserInfoService();
   User? _user;
   String? _userInfoDisplay;
   bool _hasAllowedNotifications = false;
+  bool _canAdmin = false;
+  StreamSubscription<User?>? _authChanges;
+  StreamSubscription<RemoteMessage>? _messages;
+  int _adminRequest = 0;
 
   @override
   void initState() {
@@ -53,12 +62,19 @@ class HomeScreenState extends State<HomeScreen> {
     _checkAppVersion();
     _user = _auth.currentUser;
 
-    if (_user != null) {
-      _loadUserData();
-    }
+    WidgetsBinding.instance.addObserver(this);
+    _authChanges = _auth.authStateChanges().listen((user) {
+      if (!mounted) return;
+      setState(() {
+        _user = user;
+        _canAdmin = false;
+        _hasAllowedNotifications = false;
+      });
+      if (user != null) _loadUserData();
+    });
 
     // Initialize Firebase Messaging for handling foreground notifications
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    _messages = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showNotificationPopup(message);
     });
   }
@@ -94,6 +110,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUserData() async {
+    await _refreshAdmin();
     try {
       await _loadUserInfo();
       await _checkAllowedNotifications();
@@ -146,6 +163,8 @@ class HomeScreenState extends State<HomeScreen> {
     await _auth.signOut();
     if (mounted) {
       setState(() {
+        _canAdmin = false;
+        _adminRequest++;
         _user = null;
         _userInfoDisplay = null;
         _hasAllowedNotifications = false;
@@ -183,24 +202,46 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshAdmin() async {
+    final request = ++_adminRequest;
+    final uid = _auth.currentUser?.uid;
+    if (mounted) setState(() => _canAdmin = false);
+    if (uid == null) return;
+    final api = VpsApi();
+    try {
+      final data = await api.request('GET', 'admin/dashboard');
+      if (mounted &&
+          request == _adminRequest &&
+          _auth.currentUser?.uid == uid) {
+        setState(
+          () => _canAdmin = (data['permissions'] as Map)['admin'] == true,
+        );
+      }
+    } catch (_) {
+      // Menu remains hidden when the server cannot verify current permission.
+    } finally {
+      api.close();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshAdmin();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _authChanges?.cancel();
+    _messages?.cancel();
+    super.dispose();
+  }
+
   void _onLogin() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    ).then((_) async {
-      _user = _auth.currentUser;
-      if (_user != null) {
-        await _loadUserInfo();
-        await _checkAllowedNotifications();
-        if (mounted) {
-          setState(() {}); // Rebuild the widget after login and data fetch
-        }
-      } else {
-        if (mounted) {
-          setState(() {}); // User is null, still need to rebuild
-        }
-      }
-    });
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+    );
   }
 
   @override
@@ -218,6 +259,11 @@ class HomeScreenState extends State<HomeScreen> {
                 _onLogin();
               } else if (value == 'logout') {
                 _confirmSignOut(context);
+              } else if (value == 'admin') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(builder: (_) => const AdminScreen()),
+                ).then((_) => _refreshAdmin());
               } else if (value == 'notifications') {
                 Navigator.push(
                   context,
@@ -233,6 +279,8 @@ class HomeScreenState extends State<HomeScreen> {
                   value: _user == null ? 'login' : 'logout',
                   child: Text(_user == null ? 'Login' : 'Logout'),
                 ),
+                if (_user != null && _canAdmin)
+                  const PopupMenuItem(value: 'admin', child: Text('Admin')),
                 if (_user != null && _hasAllowedNotifications)
                   const PopupMenuItem(
                     value: 'notifications',

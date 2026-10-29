@@ -179,3 +179,21 @@ The Android file-selector implementation is pinned to 0.5.2+4 after inspecting
 its official package source (minSdk 21). Newer 0.5.2+5 and later require minSdk
 24. This preserves the existing app minSdk 23 without changing Flutter/Dart,
 Firebase versions or the existing Android security floors.
+
+## VPS API/admin continuation (source only)
+
+The authenticated VPS client uses fresh Firebase tokens in Authorization headers,
+rejects account changes during requests and never automatically retries writes.
+The VPS checks signatures, current account status/revocation and current
+permissions on each request. Profile/notification access uses the authenticated
+UID; profile responses are not cached by HTTP. Device registration preserves
+other devices. Synthetic SQL tests cover rollback and parameterized writes;
+synthetic mobile tests cover permission-filtered admin actions, confirmation,
+single submission and retention of edits after failure.
+
+Provider JSON/multipart saves now target the VPS, forwarding once to the fixed
+hosted save API for existing logo/storage semantics. Private review fields and
+client-supplied approval/submitter changes are excluded. Direct database traffic
+uses the user's explicitly approved non-TLS transport. Credentials remain outside
+all source repositories. No content/user writes, notifications, app builds,
+installation, deployment or dependency changes accompanied this continuation.
