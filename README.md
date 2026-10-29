@@ -35,8 +35,10 @@ The app refreshes the token before saving; the server checks the claim and token
 revocation independently. User type and notification preferences do not grant
 management access. New providers added by verified managers are approved
 immediately by the website API. Public submissions retain their approval
-workflow. Editing preserves approval, logos, submitter and reviews. Logo uploads,
-approval and deletion remain website operations.
+workflow. Editing preserves approval, submitter and reviews. The directory shows
+provider logos; add/edit forms allow a JPG/PNG upload (up to 500 KB), with a preview.
+Omitting an upload preserves the existing logo. Approval changes and deletion
+remain website operations.
 
 This feature requires the website's `api/get_providers.php` and
 `api/save_provider.php`, documented in its `docs/mobile-provider-api.md`. Website
@@ -122,3 +124,26 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Provider logos (development branch)
+
+`feature/app-development` adds directory thumbnails and native JPG/PNG file
+selection to provider entry and AI review. The official `file_selector` plugin
+uses Android implementation 0.5.2+4 (API 21+), preserving this app's API 23
+minimum; newer implementation versions require API 24. Only its dependency
+family was added; Firebase and security floors were preserved. Invalid or missing
+hosted logo images show a fallback icon.
+
+`feature/backend-development` discovers image URLs/labels on provider pages and
+asks the model to suggest an actual logo. A selected discovered image is fetched
+with public-address/redirect checks and normalized to a bounded PNG preview.
+AI previews can be discarded/replaced; a previously selected upload is retained
+until the administrator chooses the website suggestion. If a source logo cannot
+be prepared (for example SVG), review retains its source link and supports a
+manual JPG/PNG upload. Text extraction still succeeds without a logo.
+
+Uploads use an authenticated multipart request to the existing hosted provider
+save API and are saved with the other provider fields. The website API extension
+is prepared in `agawlbb/negaautism.org` branch `feature/mobile-provider-logos`;
+that extension must be deployed before the mobile upload feature is used.
+No merge, hosting/VPS deployment, APK build or installation accompanies this work.

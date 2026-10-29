@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'provider_logo.dart';
+
 import 'package:http/http.dart' as http;
 
 class ProviderChoice {
@@ -10,7 +12,7 @@ class ProviderChoice {
 
 class DirectoryProvider {
   final int id;
-  final String name, website, description, phone, category, county;
+  final String name, website, description, phone, category, county, logo;
   final int categoryId, countyId;
 
   DirectoryProvider.fromJson(Map<String, dynamic> json)
@@ -19,10 +21,21 @@ class DirectoryProvider {
       website = json['website'] as String? ?? '',
       description = json['description'] as String? ?? '',
       phone = json['phone_number'] as String? ?? '',
+      logo = json['logo'] as String? ?? '',
       category = json['category_name'] as String,
       county = json['county_name'] as String,
       categoryId = int.parse('${json['category_id']}'),
       countyId = int.parse('${json['county_id']}');
+}
+
+String? providerLogoUrl(String filename) {
+  if (!RegExp(
+    r'^[a-zA-Z0-9][a-zA-Z0-9_.-]*\.(png|jpe?g|gif|webp)$',
+    caseSensitive: false,
+  ).hasMatch(filename)) {
+    return null;
+  }
+  return Uri.https('negaautism.org', '/logos/$filename').toString();
 }
 
 class ProviderDirectory {
@@ -150,27 +163,46 @@ class ProviderService {
     required String phone,
     required int categoryId,
     required int countyId,
+    ProviderLogo? logo,
   }) async {
     if (token.isEmpty) {
       throw const ProviderApiException('Sign in to manage providers.');
     }
+    final fields = <String, dynamic>{
+      'idToken': token,
+      if (id != null) 'id': id,
+      'name': name.trim(),
+      'website': website.trim(),
+      'description': description.trim(),
+      'phone_number': phone.trim(),
+      'category_id': categoryId,
+      'county_id': countyId,
+    };
     // Never retry a write automatically: a timeout may follow a successful save.
-    final response = await _client
-        .post(
-          _base.resolve('save_provider.php'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'idToken': token,
-            if (id != null) 'id': id,
-            'name': name.trim(),
-            'website': website.trim(),
-            'description': description.trim(),
-            'phone_number': phone.trim(),
-            'category_id': categoryId,
-            'county_id': countyId,
-          }),
-        )
-        .timeout(const Duration(seconds: 20));
+    final http.Response response;
+    if (logo == null) {
+      response = await _client
+          .post(
+            _base.resolve('save_provider.php'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(fields),
+          )
+          .timeout(const Duration(seconds: 20));
+    } else {
+      final request =
+          http.MultipartRequest('POST', _base.resolve('save_provider.php'))
+            ..fields.addAll(fields.map((key, value) => MapEntry(key, '$value')))
+            ..files.add(
+              http.MultipartFile.fromBytes(
+                'logo',
+                logo.bytes,
+                filename: logo.filename,
+              ),
+            );
+      response = await (() async => http.Response.fromStream(
+        await _client.send(request),
+      ))().timeout(const Duration(seconds: 20));
+    }
     return _response(response)['message'] as String;
   }
 

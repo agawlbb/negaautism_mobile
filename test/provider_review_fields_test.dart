@@ -173,6 +173,7 @@ void main() {
         'phone': '',
         'category_id': 1,
         'county_id': 2,
+        'logo': null,
       });
     },
   );

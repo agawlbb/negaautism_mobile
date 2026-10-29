@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'provider_service.dart';
+import 'provider_logo.dart';
 import 'provider_contact_links.dart';
 import 'provider_extraction_service.dart';
 import 'provider_suggestions_screen.dart';
@@ -33,6 +34,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
   late final TextEditingController _name, _website, _description, _phone;
   late final String? _uid;
   int? _category, _county;
+  ProviderLogo? _logo;
   bool _saving = false;
   bool _extracting = false;
   String _progress = '';
@@ -94,6 +96,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     'phone': _phone.text,
     'category_id': _category,
     'county_id': _county,
+    'logo': _logo,
   };
 
   Future<void> _reviewSuggestions() async {
@@ -126,6 +129,9 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
       await _freshToken();
       if (!mounted) return;
       setState(() {
+        if (selected.containsKey('logo')) {
+          _logo = selected['logo'] as ProviderLogo?;
+        }
         for (final entry in {
           'name': _name,
           'description': _description,
@@ -243,6 +249,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
       phone: phone,
       categoryId: category as int,
       countyId: county as int,
+      logo: fields['logo'] as ProviderLogo?,
     );
   }
 
@@ -370,6 +377,12 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
                   child: const Text('Review suggestions'),
                 ),
             ],
+            ProviderLogoInput(
+              logo: _logo,
+              existingUrl: providerLogoUrl(widget.provider?.logo ?? ''),
+              enabled: !_saving && !_extracting,
+              onChanged: (logo) => setState(() => _logo = logo),
+            ),
             TextFormField(
               controller: _phone,
               enabled: !_saving && !_extracting,

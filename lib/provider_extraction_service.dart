@@ -4,17 +4,30 @@ import 'dart:io';
 import 'dart:math';
 
 import 'provider_service.dart';
+import 'provider_logo.dart';
 
 class ProviderSuggestions {
   final Map<String, dynamic> fields;
   final List<String> notes;
   final List<Map<String, String>> sources;
   ProviderSuggestions.fromJson(Map<String, dynamic> json)
-    : fields = json,
-      notes = (json['review_notes'] as List).cast<String>(),
+    : fields = {...json},
+      notes = (json['review_notes'] as List).cast<String>().toList(),
       sources = (json['sources'] as List)
           .map((s) => Map<String, String>.from(s as Map))
-          .toList();
+          .toList() {
+    if (json['logo_image'] is Map) {
+      try {
+        fields['logo'] = ProviderLogo.fromJson(
+          Map<String, dynamic>.from(json['logo_image'] as Map),
+        );
+      } catch (_) {
+        notes.add(
+          'The suggested logo could not be read. Upload a JPG or PNG logo manually.',
+        );
+      }
+    }
+  }
 }
 
 class ProviderExtractionException implements Exception {

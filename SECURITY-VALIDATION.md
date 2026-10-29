@@ -138,3 +138,20 @@ allowing manual completion. Fresh Firebase permission verification is shared by
 both save paths; review notes, source excerpts and supporting addresses are not
 save fields. HTTP saves and Firebase users/tokens are synthetic. No real provider
 write, hosted backend change, Android build, installation or deployment occurred.
+
+## October 29, 2026 - provider logo source validation
+
+Directory logos resolve only safe filenames within the existing HTTPS logos
+folder. Selected images use native file selection, JPG/PNG signatures and a
+500 KB client bound; the hosted API independently decodes and sanitizes uploads.
+Authenticated multipart saves are tested with synthetic bytes/tokens, preserving
+JSON saves without uploads and excluding private review fields. Optional malformed
+AI previews leave extracted text available. Review tests preserve an existing
+selection and explicitly switch to a suggested image. No credentials were placed
+in image URLs. The picker needs device/build validation; no APK build, install,
+real provider write or service deployment was performed.
+
+The Android file-selector implementation is pinned to 0.5.2+4 after inspecting
+its official package source (minSdk 21). Newer 0.5.2+5 and later require minSdk
+24. This preserves the existing app minSdk 23 without changing Flutter/Dart,
+Firebase versions or the existing Android security floors.

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'provider_edit_screen.dart';
 import 'provider_service.dart';
+import 'provider_logo.dart';
 import 'provider_contact_links.dart';
 import 'website_theme.dart';
 
@@ -238,6 +239,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         vertical: 6,
                       ),
                       child: ExpansionTile(
+                        leading: ProviderLogoView(
+                          url: providerLogoUrl(p.logo),
+                          size: 56,
+                        ),
                         title: Text(p.name),
                         subtitle: Text('${p.category} · ${p.county}'),
                         childrenPadding: const EdgeInsets.all(16),

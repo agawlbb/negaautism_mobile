@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'provider_contact_links.dart';
 import 'provider_extraction_service.dart';
 import 'provider_service.dart';
+import 'provider_logo.dart';
 
 class ProviderReviewResult {
   final Map<String, dynamic> fields;
@@ -34,11 +35,13 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
   final _text = <String, TextEditingController>{};
   final _choices = <String, int?>{};
   bool _saving = false;
+  ProviderLogo? _logo;
   String? _error;
 
   Map<String, dynamic> get _fields => {
     for (final entry in _text.entries) entry.key: entry.value.text,
     ..._choices,
+    'logo': _logo,
   };
 
   Future<void> _add() async {
@@ -106,6 +109,9 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
   @override
   void initState() {
     super.initState();
+    _logo =
+        widget.current['logo'] as ProviderLogo? ??
+        widget.suggestions.fields['logo'] as ProviderLogo?;
     for (final key in labels.keys) {
       final suggestion = widget.suggestions.fields[key];
       final isChoice = key == 'category_id' || key == 'county_id';
@@ -269,6 +275,28 @@ class _ProviderSuggestionsScreenState extends State<ProviderSuggestionsScreen> {
                 _editor(entry.key, entry.value),
                 const SizedBox(height: 12),
               ],
+              if (widget.suggestions.fields['logo'] is ProviderLogo &&
+                  !identical(_logo, widget.suggestions.fields['logo']))
+                TextButton(
+                  onPressed: _saving
+                      ? null
+                      : () => setState(
+                          () => _logo =
+                              widget.suggestions.fields['logo'] as ProviderLogo,
+                        ),
+                  child: const Text('Use suggested website logo'),
+                ),
+              ProviderLogoInput(
+                logo: _logo,
+                enabled: !_saving,
+                onChanged: (logo) => setState(() => _logo = logo),
+              ),
+              if (_logo == null &&
+                  widget.suggestions.fields['logo_url'] is String)
+                ProviderContactLinks(
+                  website: widget.suggestions.fields['logo_url'] as String,
+                  phone: '',
+                ),
               const Divider(),
               const Text(
                 'Administrator review notes',
