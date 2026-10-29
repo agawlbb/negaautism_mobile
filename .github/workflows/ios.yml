@@ -1,5 +1,7 @@
 name: iOS build and TestFlight
 on:
+  push:
+    branches: [feature/ios-testflight-20261029]
   workflow_dispatch:
     inputs:
       publish:
