@@ -58,12 +58,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       _error = null;
     });
     try {
-      final directory = await _service.load(
-        countyId: _county,
-        categoryId: _category,
-      );
+      // Retain the complete public directory so a selected filter doesn't hide
+      // other populated choices. Apply browsing filters locally below.
+      final directory = await _service.load();
       if (mounted && request == _request) {
-        setState(() => _directory = directory);
+        setState(() {
+          _directory = directory;
+          if (!directory.browsingCounties.any((c) => c.id == _county)) {
+            _county = null;
+          }
+          if (!directory.browsingCategories.any((c) => c.id == _category)) {
+            _category = null;
+          }
+        });
       }
     } catch (e) {
       if (mounted && request == _request) {
@@ -136,13 +143,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final providers = (_directory?.providers ?? <DirectoryProvider>[])
-        .where(
-          (p) => '${p.name} ${p.description} ${p.category} ${p.county}'
-              .toLowerCase()
-              .contains(_search.toLowerCase()),
-        )
-        .toList();
+    final providers =
+        _directory?.matchingProviders(
+          countyId: _county,
+          categoryId: _category,
+          search: _search,
+        ) ??
+        <DirectoryProvider>[];
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: Container(
@@ -182,14 +189,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   onChanged: (v) => setState(() => _search = v),
                 ),
                 if (_directory != null) ...[
-                  _filter('Counties', _directory!.counties, _county, (v) {
+                  _filter('Counties', _directory!.browsingCounties, _county, (
+                    v,
+                  ) {
                     setState(() => _county = v);
-                    _load();
                   }),
-                  _filter('Categories', _directory!.categories, _category, (v) {
-                    setState(() => _category = v);
-                    _load();
-                  }),
+                  _filter(
+                    'Categories',
+                    _directory!.browsingCategories,
+                    _category,
+                    (v) {
+                      setState(() => _category = v);
+                    },
+                  ),
                 ],
               ],
             ),

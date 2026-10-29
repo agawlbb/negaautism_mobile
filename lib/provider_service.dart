@@ -28,6 +28,38 @@ class DirectoryProvider {
 class ProviderDirectory {
   final List<DirectoryProvider> providers;
   final List<ProviderChoice> categories, counties;
+
+  // Keep all lookup choices for editing, but hide unused ones when browsing.
+  List<ProviderChoice> get browsingCategories {
+    final used = providers.map((p) => p.categoryId).toSet();
+    return categories.where((c) => used.contains(c.id)).toList();
+  }
+
+  List<ProviderChoice> get browsingCounties {
+    final used = providers.map((p) => p.countyId).toSet();
+    return counties.where((c) => used.contains(c.id)).toList();
+  }
+
+  List<DirectoryProvider> matchingProviders({
+    int? countyId,
+    int? categoryId,
+    String search = '',
+  }) {
+    final query = search.toLowerCase();
+    return providers
+        .where(
+          (p) =>
+              (countyId == null ||
+                  p.countyId == countyId ||
+                  p.county == 'Multiple') &&
+              (categoryId == null || p.categoryId == categoryId) &&
+              '${p.name} ${p.description} ${p.category} ${p.county}'
+                  .toLowerCase()
+                  .contains(query),
+        )
+        .toList();
+  }
+
   ProviderDirectory.fromJson(Map<String, dynamic> json)
     : providers = (json['providers'] as List)
           .map((p) => DirectoryProvider.fromJson(p as Map<String, dynamic>))

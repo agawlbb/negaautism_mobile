@@ -25,6 +25,8 @@ the home screen when the provider directory opens.
 `Browse providers` is available without signing in. Search by name or description,
 filter by county/category, and expand a provider to view their description,
 phone and website. County filtering includes providers serving multiple counties.
+Browsing dropdowns show only categories and counties represented by approved
+providers. Add/edit forms keep the complete category and county choices.
 Website links open in the external browser, and phone links open the device's
 phone app. Login is available from the header's three-dot menu only.
 
