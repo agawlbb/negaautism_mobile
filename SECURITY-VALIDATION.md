@@ -1,5 +1,21 @@
 # Security validation
 
+## October 29, 2026 - provider feature validation (no Android build)
+
+Resolved dependencies offline using Flutter 3.47.8 / Dart 3.13.7 in the VPS
+development container. SDK-pinned framework/test dependencies now match that SDK;
+Firebase, HTTP and shared-preferences versions and existing security floors were
+preserved. Local analysis and unit tests cover the provider client and existing
+preference compatibility. Website API tests use synthetic authentication and a
+temporary SQLite adapter, with no production calls or data.
+
+Provider writes require the `manage_providers` Firebase claim and fresh token
+verification on the server. Tokens are sent only in HTTPS request bodies, not
+persisted by the provider client or placed in URLs. Android builds/device tests
+remain laptop work. No Android build, iOS work, installation, deployment,
+notification or GitHub runner was performed. Historical validation limits below
+remain applicable to installed binaries.
+
 ## October 24, 2026 - native HTTPS SDK requirement (no rebuild)
 
 Official advisory:

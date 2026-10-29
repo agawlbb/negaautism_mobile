@@ -9,6 +9,7 @@ import 'notifications_screen.dart'; // Import the NotificationsScreen
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'manage_events_screen.dart'; // <-- NEW: Manage Events screen
+import 'providers_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -250,6 +251,20 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProvidersScreen()),
+                ),
+                icon: const Icon(Icons.business),
+                label: const Text('Browse providers'),
+              ),
+            ),
+          ),
           // Full-width pink "Manager events" button under the welcome line
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),

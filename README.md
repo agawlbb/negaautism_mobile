@@ -15,6 +15,37 @@ instruction. The existing lockfile still records the previous Flutter dependency
 set; resolve it using the patched stable SDK when that work is authorized.
 See [security validation](SECURITY-VALIDATION.md) for the exact validation limits.
 
+## Provider directory
+
+`Browse providers` is available without signing in. Search by name or description,
+filter by county/category, and expand a provider to view their description,
+phone and website. County filtering includes providers serving multiple counties.
+
+Accounts with the Firebase `manage_providers` claim can add and edit providers.
+The app refreshes the token before saving; the server checks the claim and token
+revocation independently. User type and notification preferences do not grant
+management access. New providers await approval in the existing website admin
+workflow. Editing preserves approval, logos, submitter and reviews. Logo uploads,
+approval and deletion remain website operations.
+
+This feature requires the website's `api/get_providers.php` and
+`api/save_provider.php`, documented in its `docs/mobile-provider-api.md`. Website
+deployment is separate; an unavailable API displays an error with a retry option.
+
+Development and tests run in the VPS development container; Android builds and
+device validation run on the laptop. Do not use GitHub Actions runners. There is
+no iOS app in the current scope. No production writes are needed for tests:
+
+```
+flutter pub get --offline
+flutter analyze --no-pub
+flutter test --no-pub --concurrency=1
+```
+
+The October 29 provider work resolved the lockfile with Flutter 3.47.8 / Dart
+3.13.7 for local analysis/tests. This updates SDK-pinned framework/test packages;
+it does not establish Android build compatibility or update installed apps.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
