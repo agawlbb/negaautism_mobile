@@ -26,7 +26,10 @@ def verify():
         profile = plistlib.loads(run('security', 'cms', '-D', '-i', str(app / 'embedded.mobileprovision')))
         entitlements = plistlib.loads(run('codesign', '-d', '--entitlements', ':-', str(app)))
         expected = 'FKR675M7PM.org.negaautism.mobile'
+        scenes = info.get('UIApplicationSceneManifest', {}).get('UISceneConfigurations', {}).get('UIWindowSceneSessionRoleApplication', [])
         checks = {
+            'scene lifecycle': any(scene.get('UISceneDelegateClassName') == 'FlutterSceneDelegate'
+                                   and scene.get('UISceneStoryboardFile') == 'Main' for scene in scenes),
             'bundle ID': info.get('CFBundleIdentifier') == 'org.negaautism.mobile',
             'build number': info.get('CFBundleVersion') == os.environ['GITHUB_RUN_NUMBER'],
             'team': profile.get('TeamIdentifier') == ['FKR675M7PM'],

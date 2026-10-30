@@ -2,24 +2,20 @@ import Flutter
 import UIKit
 
 @main
-@objc class AppDelegate: FlutterAppDelegate, UIDocumentPickerDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate, UIDocumentPickerDelegate {
   private var exportResult: FlutterResult?
   private var exportDirectory: URL?
 
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-    let started = super.application(application, didFinishLaunchingWithOptions: launchOptions)
-    if let controller = window?.rootViewController as? FlutterViewController {
-      let channel = FlutterMethodChannel(name: "org.negaautism.mobileapp/documents", binaryMessenger: controller.binaryMessenger)
-      channel.setMethodCallHandler { [weak self] call, result in
-        guard call.method == "savePdf" else { result(FlutterMethodNotImplemented); return }
-        self?.savePdf(call, result: result)
-      }
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let channel = FlutterMethodChannel(
+      name: "org.negaautism.mobileapp/documents",
+      binaryMessenger: engineBridge.applicationRegistrar.messenger()
+    )
+    channel.setMethodCallHandler { [weak self] call, result in
+      guard call.method == "savePdf" else { result(FlutterMethodNotImplemented); return }
+      self?.savePdf(call, result: result)
     }
-    return started
   }
 
   private func savePdf(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -30,7 +26,10 @@ import UIKit
           filename.range(of: "^[a-zA-Z0-9_-]+\\.pdf$", options: .regularExpression) != nil,
           value.data.count >= 5, value.data.count <= 15 * 1024 * 1024,
           String(data: value.data.prefix(5), encoding: .ascii) == "%PDF-",
-          var presenter = window?.rootViewController else {
+          var presenter = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive })?
+            .windows.first(where: { $0.isKeyWindow })?.rootViewController else {
       result(FlutterError(code: "invalid", message: "The PDF could not be exported.", details: nil)); return
     }
     while let presented = presenter.presentedViewController { presenter = presented }

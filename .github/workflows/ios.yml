@@ -44,6 +44,17 @@ jobs:
       - run: flutter test --no-pub --concurrency=1
       - name: Configure Firebase and signing
         run: python3 scripts/ios_release.py configure
+      - name: Build iOS simulator app
+        run: flutter build ios --simulator --debug --no-codesign
+      - name: Verify iOS startup on simulator
+        run: python3 scripts/ios_launch_smoke.py
+      - name: Save launch screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-launch-smoke
+          path: build/ios/launch-smoke/launch.png
+          if-no-files-found: ignore
       - name: Build unsigned iOS app
         if: ${{ !inputs.publish }}
         run: flutter build ios --release --no-codesign --build-number "$GITHUB_RUN_NUMBER"

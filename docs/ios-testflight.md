@@ -1,5 +1,20 @@
 # iOS and TestFlight
 
+## Startup correction — October 30, 2026
+
+Task `codex/ios-startup-scene-fix`, based on fetched master `1698c88`.
+TestFlight build 4 was reported to close on launch. Its customized AppDelegate
+prevented Flutter's automatic UIScene migration, leaving the Xcode 27 build with
+the unsupported legacy application lifecycle. Adopt FlutterSceneDelegate through
+the scene manifest and register plugins and the PDF channel only after the
+implicit engine initializes. PDF presentation uses the active scene's key window.
+
+The iOS workflow now installs and launches the actual Firebase-configured app on
+an iPhone simulator and checks that its process survives startup before upload.
+It retains a launch screenshot for visual inspection. IPA validation also checks
+the exported scene configuration. Simulator validation does not replace physical
+iPhone acceptance, notification delivery or document-picker testing.
+
 Task: feature/ios-testflight-20261029. Base: b6194addb15510c5e1e39e4e8f1c6a6b9bc4ccc6.
 Use the existing Flutter app and GitHub macOS runners for iOS and TestFlight.
 The workflow runs only on workflow_dispatch; pushing does not publish a build.
