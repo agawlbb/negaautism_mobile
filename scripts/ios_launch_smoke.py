@@ -27,7 +27,10 @@ def main():
     udid = device['udid']
     if device['state'] != 'Booted':
         run('xcrun', 'simctl', 'boot', udid)
-    run('open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid)
+    simulator = Path(run('xcode-select', '-p')) / 'Applications/Simulator.app'
+    if not simulator.is_dir():
+        raise SystemExit('The selected Xcode installation has no Simulator.app')
+    run('open', '-a', str(simulator), '--args', '-CurrentDeviceUDID', udid)
     run('xcrun', 'simctl', 'bootstatus', udid, '-b', timeout=600)
     app = Path('build/ios/iphonesimulator/Runner.app')
     if not app.is_dir():
