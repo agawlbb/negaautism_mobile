@@ -17,6 +17,14 @@ IPA validation also checks
 the exported scene configuration. Simulator validation does not replace physical
 iPhone acceptance, notification delivery or document-picker testing.
 
+Validation run 41131274493 on fix commit 412dd19 passed the six signing tests,
+Flutter analysis, all Flutter tests, simulator compilation, app process survival
+for 20 seconds after launch, and unsigned release compilation. The headless
+runner could not capture a display screenshot; visual and physical-device
+acceptance remain pending. No replacement was uploaded by this validation run.
+Apple had no submitted crash feedback available, so the scene incompatibility is
+the identified startup defect rather than a symbolicated device-crash diagnosis.
+
 Task: feature/ios-testflight-20261029. Base: b6194addb15510c5e1e39e4e8f1c6a6b9bc4ccc6.
 Use the existing Flutter app and GitHub macOS runners for iOS and TestFlight.
 The workflow runs only on workflow_dispatch; pushing does not publish a build.
