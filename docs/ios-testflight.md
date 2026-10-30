@@ -11,7 +11,9 @@ implicit engine initializes. PDF presentation uses the active scene's key window
 
 The iOS workflow now installs and launches the actual Firebase-configured app on
 an iPhone simulator and checks that its process survives startup before upload.
-It retains a launch screenshot for visual inspection. IPA validation also checks
+It retains a launch screenshot when the runner has a simulator display; headless
+runners still require app process survival and report visual validation as pending.
+IPA validation also checks
 the exported scene configuration. Simulator validation does not replace physical
 iPhone acceptance, notification delivery or document-picker testing.
 

@@ -51,6 +51,7 @@ jobs:
         run: python3 scripts/ios_launch_smoke.py
       - name: Save launch screenshot
         if: always()
+        timeout-minutes: 2
         uses: actions/upload-artifact@v4
         with:
           name: ios-launch-smoke

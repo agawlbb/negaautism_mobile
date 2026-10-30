@@ -28,9 +28,10 @@ def main():
     if device['state'] != 'Booted':
         run('xcrun', 'simctl', 'boot', udid)
     simulator = Path(run('xcode-select', '-p')) / 'Applications/Simulator.app'
-    if not simulator.is_dir():
-        raise SystemExit('The selected Xcode installation has no Simulator.app')
-    run('open', '-a', str(simulator), '--args', '-CurrentDeviceUDID', udid)
+    if simulator.is_dir():
+        run('open', '-a', str(simulator), '--args', '-CurrentDeviceUDID', udid)
+    else:
+        print('Runner has no Simulator.app; validating app startup with headless simctl.', flush=True)
     run('xcrun', 'simctl', 'bootstatus', udid, '-b', timeout=600)
     app = Path('build/ios/iphonesimulator/Runner.app')
     if not app.is_dir():
@@ -48,8 +49,11 @@ def main():
         os.kill(pid, 0)
     except ProcessLookupError:
         raise SystemExit('iOS app exited during startup; refusing TestFlight publication') from None
-    run('xcrun', 'simctl', 'io', udid, 'screenshot', str((folder / 'launch.png').resolve()))
-    print('iOS app remained running after startup; launch screenshot captured.', flush=True)
+    try:
+        run('xcrun', 'simctl', 'io', udid, 'screenshot', str((folder / 'launch.png').resolve()), timeout=30)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        print('::warning::Simulator display capture unavailable; app process survival passed, visual validation remains pending.', flush=True)
+    print('iOS app remained running for 20 seconds after startup.', flush=True)
 
 
 if __name__ == '__main__':
