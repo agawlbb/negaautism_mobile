@@ -197,3 +197,26 @@ client-supplied approval/submitter changes are excluded. Direct database traffic
 uses the user's explicitly approved non-TLS transport. Credentials remain outside
 all source repositories. No content/user writes, notifications, app builds,
 installation, deployment or dependency changes accompanied this continuation.
+
+## Hosted admin capabilities and PDF export (source only)
+
+The hosted capability endpoint independently verifies fresh/revocation-checked
+Firebase tokens and current permissions, without browser sessions or token URLs.
+User edits preserve unrelated claims, protect self-deletion and self-removal of
+user-management access, and revoke sessions when permissions are removed.
+Synthetic tests cover profile rollback, claim restoration and explicit partial
+Firebase/MySQL failure reporting. Foreign keys and review checks protect content
+from accidental cascading deletion. No real accounts/content were changed.
+
+Category images reuse hosted decoding/sanitization and retain shared logos.
+Individual and booklet PDFs reuse the established complete renderers and limits.
+VPS response reads are complete and byte-bounded. The Dart export channel rejects
+non-PDF bytes/path-like filenames; Android/iOS repeat those checks and use native
+document pickers. Method-channel/widget tests do not establish native compilation,
+platform lifecycle behavior or physical-device validation. No builds, installation,
+deployment, dependency changes or forum changes accompany this source work.
+
+Validation: 64 VPS tests, 54 mobile tests, 11 hosted admin HTTP tests and the
+existing provider/PDF regressions pass. Flutter analysis and PHP syntax checks
+pass. Kotlin/Swift compilation and device document-picker validation remain
+outstanding; no native build or deployment was run.

@@ -43,6 +43,7 @@ class VpsApi {
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? query,
+    Duration timeout = const Duration(seconds: 20),
   }) async {
     _checkOwner();
     final token = await _token();
@@ -59,7 +60,7 @@ class VpsApi {
     if (body != null) request.body = jsonEncode(body);
     final response = await (() async => http.Response.fromStream(
       await _client.send(request),
-    ))().timeout(const Duration(seconds: 20));
+    ))().timeout(timeout);
     _checkOwner();
     Map<String, dynamic> data;
     try {

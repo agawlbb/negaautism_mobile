@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'provider_logo.dart';
+import 'provider_service.dart';
+
 import 'package:flutter/material.dart';
 
 import 'vps_api.dart';
@@ -14,7 +19,7 @@ class _AdminTaxonomyScreenState extends State<AdminTaxonomyScreen> {
   late final VpsApi _api = widget.api ?? VpsApi();
   List<Map<String, dynamic>> _items = [];
   String? _error;
-  bool _loading = true;
+  bool _loading = true, _uploading = false;
   @override
   void initState() {
     super.initState();
@@ -48,12 +53,67 @@ class _AdminTaxonomyScreenState extends State<AdminTaxonomyScreen> {
   }
 
   Future<void> _edit([Map<String, dynamic>? item]) async {
+    if (_uploading) return;
     final saved = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => _ChoiceDialog(api: _api, kind: widget.kind, item: item),
     );
     if (saved == true && mounted) await _load();
+  }
+
+  Future<void> _uploadLogo(Map<String, dynamic> item) async {
+    if (_uploading) return;
+    setState(() => _uploading = true);
+    try {
+      final logo = await pickProviderLogo();
+      if (logo == null || !mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Replace logo for ${item['name']}?'),
+          content: ProviderLogoView(logo: logo, size: 128),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Save logo'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      final result = await _api.request(
+        'PUT',
+        'admin/categories/${item['id']}/logo',
+        body: {'logo_base64': base64Encode(logo.bytes)},
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message'] as String? ?? 'Category logo updated.',
+            ),
+          ),
+        );
+        await _load();
+      }
+    } on ProviderLogoException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   @override
@@ -67,13 +127,15 @@ class _AdminTaxonomyScreenState extends State<AdminTaxonomyScreen> {
     appBar: AppBar(
       title: Text(widget.kind == 'categories' ? 'Categories' : 'Counties'),
     ),
-    floatingActionButton: _loading || _error != null
+    floatingActionButton: _loading || _uploading || _error != null
         ? null
         : FloatingActionButton(onPressed: _edit, child: const Icon(Icons.add)),
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
-            onRefresh: _load,
+            onRefresh: () async {
+              if (!_uploading) await _load();
+            },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
@@ -84,8 +146,24 @@ class _AdminTaxonomyScreenState extends State<AdminTaxonomyScreen> {
                   ),
                   TextButton(onPressed: _load, child: const Text('Retry')),
                 ],
+                if (_uploading) const LinearProgressIndicator(),
                 for (final item in _items)
                   ListTile(
+                    leading: widget.kind == 'categories'
+                        ? ProviderLogoView(
+                            url: providerLogoUrl(item['logo'] as String? ?? ''),
+                            size: 40,
+                          )
+                        : null,
+                    trailing: widget.kind == 'categories'
+                        ? IconButton(
+                            tooltip: 'Replace category logo',
+                            icon: const Icon(Icons.image_outlined),
+                            onPressed: _uploading
+                                ? null
+                                : () => _uploadLogo(item),
+                          )
+                        : null,
                     title: Text('${item['name']}'),
                     subtitle:
                         widget.kind == 'counties' &&

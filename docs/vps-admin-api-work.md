@@ -13,7 +13,7 @@ configured, deployed and verified. No automatic fallback to the hosted reads.
 
 Next: authenticated profile/notifications and event writes; provider writes and
 hosted asset/PDF contracts; native admin dashboard, approval queues, taxonomy and
-Firebase user management. Inventory the separate forum app before migrating it.
+Firebase user management. Forum work is explicitly excluded by the user.
 Database host, account grants, VPS IP allowlisting and TLS connectivity remain
 unverified; do not test against production data in development.
 
@@ -39,9 +39,31 @@ No new package dependencies were added in this continuation. No live provider,
 event, review, notification or user mutations were used for validation.
 
 Remaining: user management, provider deletion, PDF downloads, category-logo uploads,
-the separate forum application, deployment and real administrator/device checks.
+deployment and real administrator/device checks.
 This task branch remains incomplete and must not be merged or distributed yet.
 
 Continuation validation: 58 backend tests and 50 mobile tests pass; Flutter
 analysis and Git whitespace checks pass. These commits remain local, unmerged
 and undeployed. Full capability parity remains outstanding as listed above.
+
+## Remaining non-forum capabilities
+
+Implemented source for Firebase user/profile/permission management, safe provider
+deletion with hosted logo cleanup, category-logo uploads, and individual/filtered
+booklet PDF exports. Hosted Firebase credentials stay on the website. The mobile
+UI provides searchable users and providers, permission-change/deletion
+confirmation, upload preview, booklet counts and native document saving.
+Forums are explicitly excluded; no forum implementation or migration is planned.
+
+The new hosted API must be deployed before these capabilities work. All current
+work remains source-only: no hosted/VPS deployment, Android/iOS build, device
+installation, real user mutation or notification was performed. Native document
+picker code still requires platform build/device validation. Do not merge or
+release this integration solely on synthetic tests.
+
+Validation for the remaining non-forum source: 64 VPS tests, 54 mobile tests,
+11 new hosted admin HTTP tests, and 8 existing provider API tests pass. Existing
+individual/booklet PDF HTTP regressions, PHP syntax, Flutter analysis and Git
+whitespace checks pass. Native document pickers were mocked in Dart tests; their
+Kotlin/Swift code has not been compiled or device-tested. Commits remain local
+until publication checks and separately authorized rollout work are completed.

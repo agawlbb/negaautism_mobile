@@ -206,3 +206,17 @@ User management, provider deletion, PDFs and category-logo uploads are outstandi
 Do not distribute this source before the VPS endpoints and database configuration
 are separately deployed and validated. No app builds, installation or hosting
 changes accompany this source checkpoint.
+
+## Remaining admin capabilities (source implementation)
+
+The same task branch now adds searchable user management, profile/permission
+editing, account deletion safeguards, provider deletion, category-logo uploads,
+and provider PDF exports. A new authenticated hosted capability API keeps Firebase
+service-account operations, logos and the existing PDF renderer on the website;
+the mobile app talks through the VPS. No forum work is included.
+
+PDFs can be saved through the Android/iOS document picker without a new package
+dependency. Booklets require a preview and recheck the 50-provider limit on the
+server. This native export code has not been built or device-tested. Deploy the
+reviewed hosted endpoint/VPS service and validate administrator/device behavior
+before distributing any app built from this integration branch.

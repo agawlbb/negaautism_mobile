@@ -1,3 +1,5 @@
+import 'admin_users_screen.dart';
+import 'admin_pdf_screen.dart';
 import 'admin_taxonomy_screen.dart';
 import 'provider_edit_screen.dart';
 import 'provider_service.dart';
@@ -83,6 +85,11 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                   ],
                   if (permissions['manage_providers'] == true) ...[
                     ListTile(
+                      leading: const Icon(Icons.picture_as_pdf_outlined),
+                      title: const Text('Provider PDFs'),
+                      onTap: () => _open(const AdminPdfScreen()),
+                    ),
+                    ListTile(
                       leading: const Icon(Icons.business),
                       title: const Text('Providers'),
                       subtitle: Text(
@@ -101,6 +108,12 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                           _open(const AdminQueueScreen(kind: 'reviews')),
                     ),
                   ],
+                  if (permissions['manage_users'] == true)
+                    ListTile(
+                      leading: const Icon(Icons.people_outline),
+                      title: const Text('Users'),
+                      onTap: () => _open(const AdminUsersScreen()),
+                    ),
                   if (permissions['manage_categories'] == true) ...[
                     ListTile(
                       leading: const Icon(Icons.category_outlined),
@@ -227,7 +240,11 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
       builder: (context) => AlertDialog(
         title: Text('$action $name?'),
         content: delete
-            ? const Text('This review will be permanently deleted.')
+            ? Text(
+                widget.kind == 'reviews'
+                    ? 'This review will be permanently deleted.'
+                    : 'This provider will be permanently deleted. Providers with reviews cannot be deleted until those reviews are removed.',
+              )
             : null,
         actions: [
           TextButton(
@@ -244,12 +261,19 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
     if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
-      await _api.request(
+      final result = await _api.request(
         delete ? 'DELETE' : 'PATCH',
         'admin/${widget.kind}/${item['id']}${delete ? '' : '/approval'}',
         body: delete ? null : {'approved': !_approved(item)},
       );
-      if (mounted) await _load();
+      if (mounted) {
+        if (result['message'] is String) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(result['message'] as String)));
+        }
+        await _load();
+      }
     } catch (e) {
       // Keep the queue visible. A timed-out write may have succeeded; refresh before trying again.
       if (mounted) {
@@ -377,7 +401,8 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
                                               : 'Approve',
                                         ),
                                       ),
-                                      if (widget.kind == 'reviews')
+                                      if (widget.kind == 'reviews' ||
+                                          widget.kind == 'providers')
                                         TextButton(
                                           onPressed: _saving || _error != null
                                               ? null
