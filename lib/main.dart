@@ -251,7 +251,8 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         flexibleSpace: Container(
           decoration: const BoxDecoration(gradient: websiteBrandGradient),
         ),
-        title: const Text('negaautism.org Mobile'),
+        centerTitle: false,
+        title: const WebsiteHeaderTitle('negaautism.org Mobile'),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {

@@ -156,7 +156,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         flexibleSpace: Container(
           decoration: const BoxDecoration(gradient: websiteBrandGradient),
         ),
-        title: const Text('Providers'),
+        centerTitle: false,
+        title: const WebsiteHeaderTitle('Providers'),
         actions: [
           IconButton(
             tooltip: 'Refresh providers',

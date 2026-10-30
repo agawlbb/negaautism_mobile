@@ -12,7 +12,10 @@ the 180-pixel iPhone icon was visually inspected. The available project launcher
 source is 192 pixels, so the 1024-pixel marketing image is upscaled from that
 source. No artwork was redesigned and no dependency was added.
 
-This is an asset-only source correction. No macOS build, TestFlight upload or
+The same logo is bundled for the left side of the rainbow headers on Home,
+Providers and Add/Edit provider. Header titles remain on one line, and existing
+back buttons and action menus are preserved. This shared header applies on both
+iOS and Android. No macOS build, TestFlight upload or
 installed-app change was performed. The corrected icon requires a subsequent
 build and release by the release task.
 

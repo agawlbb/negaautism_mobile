@@ -13,6 +13,28 @@ const websiteBrandGradient = LinearGradient(
   ],
 );
 
+class WebsiteHeaderTitle extends StatelessWidget {
+  final String title;
+  const WebsiteHeaderTitle(this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Image.asset(
+        'assets/images/nega_logo.png',
+        width: 40,
+        height: 40,
+        fit: BoxFit.contain,
+        excludeFromSemantics: true,
+      ),
+      const SizedBox(width: 8),
+      Flexible(
+        child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+    ],
+  );
+}
+
 ThemeData websiteTheme() {
   final colors = ColorScheme.fromSeed(seedColor: websiteTeal).copyWith(
     primary: websiteTeal,

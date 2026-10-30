@@ -320,7 +320,10 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
         flexibleSpace: Container(
           decoration: const BoxDecoration(gradient: websiteBrandGradient),
         ),
-        title: Text(widget.provider == null ? 'Add provider' : 'Edit provider'),
+        centerTitle: false,
+        title: WebsiteHeaderTitle(
+          widget.provider == null ? 'Add provider' : 'Edit provider',
+        ),
       ),
       body: Form(
         key: _form,
