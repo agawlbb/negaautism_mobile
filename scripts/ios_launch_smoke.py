@@ -7,8 +7,12 @@ import subprocess
 import time
 
 
-def run(*args):
-    return subprocess.check_output(args, text=True, stderr=subprocess.STDOUT).strip()
+def run(*args, timeout=180):
+    try:
+        return subprocess.check_output(args, text=True, stderr=subprocess.STDOUT, timeout=timeout).strip()
+    except subprocess.CalledProcessError as error:
+        print(error.output, flush=True)
+        raise
 
 
 def main():
@@ -18,12 +22,13 @@ def main():
                   if device['isAvailable'] and device['name'].startswith('iPhone')]
     if not candidates:
         raise SystemExit('No available iPhone simulator')
-    runtime, device = sorted(candidates, key=lambda item: item[0], reverse=True)[0]
+    runtime, device = sorted(candidates, key=lambda item: (item[0], 'Pro' in item[1]['name']), reverse=True)[0]
     print('Launch smoke test: ' + device['name'] + ' / ' + runtime, flush=True)
     udid = device['udid']
     if device['state'] != 'Booted':
         run('xcrun', 'simctl', 'boot', udid)
-    run('xcrun', 'simctl', 'bootstatus', udid, '-b')
+    run('open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid)
+    run('xcrun', 'simctl', 'bootstatus', udid, '-b', timeout=600)
     app = Path('build/ios/iphonesimulator/Runner.app')
     if not app.is_dir():
         raise SystemExit('Build the simulator app first')
@@ -36,11 +41,11 @@ def main():
     time.sleep(20)
     folder = Path('build/ios/launch-smoke')
     folder.mkdir(parents=True, exist_ok=True)
-    run('xcrun', 'simctl', 'io', udid, 'screenshot', str(folder / 'launch.png'))
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
         raise SystemExit('iOS app exited during startup; refusing TestFlight publication') from None
+    run('xcrun', 'simctl', 'io', udid, 'screenshot', str((folder / 'launch.png').resolve()))
     print('iOS app remained running after startup; launch screenshot captured.', flush=True)
 
 
