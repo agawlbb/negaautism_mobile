@@ -187,36 +187,23 @@ corresponding source, including your changes, under the project license.
 
 See [public-source review](docs/public-source-review.md) for this publication audit.
 
-## VPS API and native admin work in progress
+## Direct VPS API and native admin work in progress
 
-`feature/vps-admin-api` migrates provider reads/saves, event reads/writes, profile
-loading and notification registration to one VPS HTTP origin. Firebase sign-in
-and FCM delivery remain direct SDK integrations. Provider logos remain hosted on
-the website; the VPS forwards validated saves to its existing upload endpoint.
-The extraction WebSocket remains for website-assistance progress and reconnects.
+feature/vps-admin-api migrates mobile HTTP operations to the VPS. It adds native
+provider/review queues, category/county management, user/profile/permission
+management, protected deletion, logo uploads and individual/booklet PDFs.
+Firebase sign-in and FCM delivery remain direct SDK integrations. The extraction
+WebSocket remains for website-assistance progress and reconnects.
 
-A server-verified Admin menu exposes provider/review queues, provider add/edit,
-category/county editing and moderator event management according to permissions.
-Admin is derived from any existing management/moderator permission, matching the
-website. Every mutation is independently authorized by the backend. Failed saves
-retain editable state; writes are not automatically retried. API clients reject
-responses if the signed-in account changed while a request was in flight.
+The VPS owns the business logic, calls Firebase administration directly, and runs
+the existing PDF renderer locally with its fonts/branding/QR code implementation.
+InMotion supplies only MySQL and logo files. No website PHP API or new website
+endpoint is required by this app branch. Existing website APIs remain intact for
+older clients. Admin access and each mutation are independently checked on the VPS.
+Writes are not automatically retried and failed edits retain their form state.
 
-User management, provider deletion, PDFs and category-logo uploads are outstanding.
-Do not distribute this source before the VPS endpoints and database configuration
-are separately deployed and validated. No app builds, installation or hosting
-changes accompany this source checkpoint.
-
-## Remaining admin capabilities (source implementation)
-
-The same task branch now adds searchable user management, profile/permission
-editing, account deletion safeguards, provider deletion, category-logo uploads,
-and provider PDF exports. A new authenticated hosted capability API keeps Firebase
-service-account operations, logos and the existing PDF renderer on the website;
-the mobile app talks through the VPS. No forum work is included.
-
-PDFs can be saved through the Android/iOS document picker without a new package
-dependency. Booklets require a preview and recheck the 50-provider limit on the
-server. This native export code has not been built or device-tested. Deploy the
-reviewed hosted endpoint/VPS service and validate administrator/device behavior
-before distributing any app built from this integration branch.
+The API contract is unchanged by this backend revision. The existing native
+Android/iOS document-picker code still requires platform build/device validation.
+Private server credentials stay outside source and are never client assets. No
+forum work, app builds, installation or production rollout accompany this source
+preparation. Validate the prepared VPS deployment before distributing clients.

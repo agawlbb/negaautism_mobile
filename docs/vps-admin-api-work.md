@@ -1,69 +1,34 @@
-# VPS admin and mobile API migration
+# Direct VPS admin/mobile API task
 
-Working branch: `feature/vps-admin-api`. Base: `7b474434b5d9e96205313fc855b62ab6edb0bbc9`.
+Working branch: feature/vps-admin-api. Base: 7b474434b5d9e96205313fc855b62ab6edb0bbc9.
 
-Purpose: implement VPS versions of existing mobile API capabilities and a native
-admin experience based on website capabilities, preserving claim boundaries.
-No deployment, app build or installation is part of this source checkpoint.
+Purpose: provide native administrative capabilities and migrate mobile API calls
+to the VPS. InMotion supplies only database and logo files; Firebase administration
+and PDF generation run on the VPS. No forum work is included.
 
-First slice: public provider/event reads, verified TLS database adapter, and mobile
-read endpoint migration. Website writes, logos and PDF generation remain hosted.
-Do not distribute this mobile source until VPS database access and endpoints are
-configured, deployed and verified. No automatic fallback to the hosted reads.
+The VPS owns provider/event/profile/notification writes and review/taxonomy
+management. Direct Firebase administration preserves unrelated claims and protects
+associated content. Provider PDFs run locally with the existing renderer/fonts/QR
+implementation. Logo decoding runs on the VPS; only file storage uses InMotion.
+The superseded hosted capability API/forwarders were removed before deployment.
+The website has no runtime changes relative to its canonical default.
 
-Next: authenticated profile/notifications and event writes; provider writes and
-hosted asset/PDF contracts; native admin dashboard, approval queues, taxonomy and
-Firebase user management. Forum work is explicitly excluded by the user.
-Database host, account grants, VPS IP allowlisting and TLS connectivity remain
-unverified; do not test against production data in development.
+The private Firebase credential was provisioned on the VPS and verified by a
+read-only Google account request. No credential value or account data was logged.
+No production content/user mutation, app build, installation or deployment ran.
+A separate development image validates the local PDF runtime without network or
+credentials. Native Android/iOS document-saving code still needs build/device
+validation. Rollout must stage the private files and update the service environment
+before the prepared backend and mobile source can be used.
 
-Validation: backend suite passes 42 tests, including API filters, public-field
-boundaries, private error responses, required TLS and missing configuration.
-Flutter analysis passes and all 43 mobile tests pass using the existing enforced
-lockfile and offline cache. No production database connections were attempted.
-This is an incomplete task checkpoint, not an integration/release candidate.
+See negaautism-vps/docs/mobile-admin-api.md and the existing vps_admin RUNBOOK
+section for contracts and the matching proposed runtime configuration.
 
-## Authenticated API and admin continuation
-
-Implemented VPS profile loading, device-specific notification registration,
-event writes, hosted provider-save gateway, provider/review approvals and review
-deletion, plus category/county CRUD. The mobile app now uses these VPS endpoints
-and provides an Admin menu, pending/all approval queues, provider add/edit,
-category/county dialogs and moderator event management. Permissions are checked
-against signed tokens and current Firebase account permissions; admin is derived
-from management/moderator privileges as on the website.
-
-Provider/logo writes remain owned by the existing hosted save endpoint behind
-the VPS gateway. The website admin handlers were not copied or deployed.
-No new package dependencies were added in this continuation. No live provider,
-event, review, notification or user mutations were used for validation.
-
-Remaining: user management, provider deletion, PDF downloads, category-logo uploads,
-deployment and real administrator/device checks.
-This task branch remains incomplete and must not be merged or distributed yet.
-
-Continuation validation: 58 backend tests and 50 mobile tests pass; Flutter
-analysis and Git whitespace checks pass. These commits remain local, unmerged
-and undeployed. Full capability parity remains outstanding as listed above.
-
-## Remaining non-forum capabilities
-
-Implemented source for Firebase user/profile/permission management, safe provider
-deletion with hosted logo cleanup, category-logo uploads, and individual/filtered
-booklet PDF exports. Hosted Firebase credentials stay on the website. The mobile
-UI provides searchable users and providers, permission-change/deletion
-confirmation, upload preview, booklet counts and native document saving.
-Forums are explicitly excluded; no forum implementation or migration is planned.
-
-The new hosted API must be deployed before these capabilities work. All current
-work remains source-only: no hosted/VPS deployment, Android/iOS build, device
-installation, real user mutation or notification was performed. Native document
-picker code still requires platform build/device validation. Do not merge or
-release this integration solely on synthetic tests.
-
-Validation for the remaining non-forum source: 64 VPS tests, 54 mobile tests,
-11 new hosted admin HTTP tests, and 8 existing provider API tests pass. Existing
-individual/booklet PDF HTTP regressions, PHP syntax, Flutter analysis and Git
-whitespace checks pass. Native document pickers were mocked in Dart tests; their
-Kotlin/Swift code has not been compiled or device-tested. Commits remain local
-until publication checks and separately authorized rollout work are completed.
+Validation: 81 VPS tests pass, including real local PDF content/page checks.
+The original PHP renderer and maximum-50-page booklet regressions pass. The
+separate image builds and passes non-root/read-only, no-network/no-secret PDF
+and timezone checks. Read-only Firebase lookup and IAM verification confirm
+account metadata access and user read/update/delete permissions. No accounts,
+policies, provider records or live logo files were mutated. The mobile code is
+unchanged; its previous 54-test/analysis result remains the client checkpoint.
+All changes remain on local task branches, unmerged and undeployed.

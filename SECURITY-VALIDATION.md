@@ -180,43 +180,25 @@ its official package source (minSdk 21). Newer 0.5.2+5 and later require minSdk
 24. This preserves the existing app minSdk 23 without changing Flutter/Dart,
 Firebase versions or the existing Android security floors.
 
-## VPS API/admin continuation (source only)
+## Direct VPS admin API revision (source only)
 
-The authenticated VPS client uses fresh Firebase tokens in Authorization headers,
-rejects account changes during requests and never automatically retries writes.
-The VPS checks signatures, current account status/revocation and current
-permissions on each request. Profile/notification access uses the authenticated
-UID; profile responses are not cached by HTTP. Device registration preserves
-other devices. Synthetic SQL tests cover rollback and parameterized writes;
-synthetic mobile tests cover permission-filtered admin actions, confirmation,
-single submission and retention of edits after failure.
+The mobile client uses fresh Firebase ID tokens in Authorization headers, rejects
+account changes during a request and never automatically retries mutations.
+The VPS validates current permissions/account status and performs business
+operations directly. Privileged Firebase credentials are provisioned privately
+on the VPS, not shipped in the client. No website PHP API is called. InMotion
+supplies only database and logo storage; its file API receives only the server's
+storage credential and safe fixed-folder image operations, never user tokens.
+The existing explicitly approved non-TLS MySQL transport remains unchanged.
 
-Provider JSON/multipart saves now target the VPS, forwarding once to the fixed
-hosted save API for existing logo/storage semantics. Private review fields and
-client-supplied approval/submitter changes are excluded. Direct database traffic
-uses the user's explicitly approved non-TLS transport. Credentials remain outside
-all source repositories. No content/user writes, notifications, app builds,
-installation, deployment or dependency changes accompanied this continuation.
+Provider metadata/review/approval preservation, shared-logo safety and SQL/Firebase
+failure cases are covered with synthetic mutations. The same PDF layout, fonts,
+branding and QR implementation now execute locally on the VPS. Its PHP child gets
+only public provider fields and no secret environment. Renderer and booklet tests
+cover complete pages, Unicode, unsupported text, unsafe logos and overflow.
 
-## Hosted admin capabilities and PDF export (source only)
-
-The hosted capability endpoint independently verifies fresh/revocation-checked
-Firebase tokens and current permissions, without browser sessions or token URLs.
-User edits preserve unrelated claims, protect self-deletion and self-removal of
-user-management access, and revoke sessions when permissions are removed.
-Synthetic tests cover profile rollback, claim restoration and explicit partial
-Firebase/MySQL failure reporting. Foreign keys and review checks protect content
-from accidental cascading deletion. No real accounts/content were changed.
-
-Category images reuse hosted decoding/sanitization and retain shared logos.
-Individual and booklet PDFs reuse the established complete renderers and limits.
-VPS response reads are complete and byte-bounded. The Dart export channel rejects
-non-PDF bytes/path-like filenames; Android/iOS repeat those checks and use native
-document pickers. Method-channel/widget tests do not establish native compilation,
-platform lifecycle behavior or physical-device validation. No builds, installation,
-deployment, dependency changes or forum changes accompany this source work.
-
-Validation: 64 VPS tests, 54 mobile tests, 11 hosted admin HTTP tests and the
-existing provider/PDF regressions pass. Flutter analysis and PHP syntax checks
-pass. Kotlin/Swift compilation and device document-picker validation remain
-outstanding; no native build or deployment was run.
+The unchanged mobile API/native UI passed 54 tests and Flutter analysis in the
+preceding source checkpoint. This backend revision introduces no mobile dependency
+or SDK change. Native Kotlin/Swift compilation and document-picker device tests
+remain outstanding. No app build, installation, production content/user mutation,
+notification, deployment or forum work accompanies this revision.
