@@ -22,6 +22,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   String? _error, _actor;
   String _search = '';
   bool _loading = true;
+  bool _includePending = false;
   @override
   void initState() {
     super.initState();
@@ -35,7 +36,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       _items = [];
     });
     try {
-      final data = await _api.request('GET', 'admin/users');
+      final data = await _api.request(
+        'GET',
+        'admin/users',
+        query: {'include_pending': _includePending ? '1' : '0'},
+      );
       if (mounted) {
         setState(() {
           _items = (data['items'] as List)
@@ -80,6 +85,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       appBar: AppBar(title: const Text('Manage users')),
       body: Column(
         children: [
+          SwitchListTile(
+            title: const Text('Show pending deletions'),
+            value: _includePending,
+            onChanged: _loading
+                ? null
+                : (value) {
+                    _includePending = value;
+                    _load();
+                  },
+          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -116,7 +131,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               '${item['username'] == '' ? item['email'] : item['username']}',
                             ),
                             subtitle: Text(
-                              '${item['full_name']}\n${item['email']}',
+                              '${item['full_name']}\n${item['email']}${item['pending_delete'] == true ? '\nPending deletion: ${item['delete_time']} (UTC)' : ''}',
                             ),
                             isThreeLine: true,
                             onTap: () => _edit(item),
@@ -178,11 +193,11 @@ class _UserEditorState extends State<_UserEditor> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(
-            delete ? 'Delete this user?' : 'Change user permissions?',
+            delete ? 'Schedule user deletion?' : 'Change user permissions?',
           ),
           content: Text(
             delete
-                ? 'The sign-in account and website profile will be permanently removed. Accounts with associated content cannot be deleted.'
+                ? 'The account will be marked for deletion in 30 days. Firebase and the website profile remain until the daily cleanup removes them. Management accounts and accounts with associated content are protected. An existing deadline will not be extended.'
                 : 'These permissions control what this user can manage on the site.',
           ),
           actions: [
@@ -192,7 +207,7 @@ class _UserEditorState extends State<_UserEditor> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(delete ? 'Delete' : 'Save'),
+              child: Text(delete ? 'Schedule deletion' : 'Save'),
             ),
           ],
         ),
@@ -239,6 +254,10 @@ class _UserEditorState extends State<_UserEditor> {
               '${widget.user['email']}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
+            if (widget.user['pending_delete'] == true)
+              Text(
+                'Pending deletion: ${widget.user['delete_time']} (UTC). Editing this profile does not cancel deletion.',
+              ),
             if (widget.user['has_profile'] != true)
               const Text('This account has no website profile to edit.'),
             for (final entry in _fields.entries)
@@ -303,7 +322,7 @@ class _UserEditorState extends State<_UserEditor> {
             if (!_self)
               TextButton(
                 onPressed: _saving ? null : () => _save(delete: true),
-                child: const Text('Delete user'),
+                child: const Text('Schedule deletion'),
               ),
           ],
         ),

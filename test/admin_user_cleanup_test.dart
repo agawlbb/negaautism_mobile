@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:negaautism_mobile/admin_user_cleanup_screen.dart';
+import 'package:negaautism_mobile/admin_users_screen.dart';
 import 'package:negaautism_mobile/vps_api.dart';
 
 Map<String, dynamic> candidate(String uid) => {
@@ -16,6 +17,47 @@ Map<String, dynamic> candidate(String uid) => {
 };
 
 void main() {
+  testWidgets('pending accounts appear only after opting in', (tester) async {
+    final filters = <String?>[];
+    final api = VpsApi(
+      token: () async => 'synthetic',
+      client: MockClient((request) async {
+        final filter = request.url.queryParameters['include_pending'];
+        filters.add(filter);
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'actor_uid': 'manager',
+            'items': filter == '1'
+                ? [
+                    {
+                      ...candidate('pending'),
+                      'pending_delete': true,
+                      'delete_time': '2026-11-29T12:00:00Z',
+                    },
+                  ]
+                : [],
+          }),
+          200,
+        );
+      }),
+    );
+    await tester.pumpWidget(MaterialApp(home: AdminUsersScreen(api: api)));
+    await tester.pumpAndSettle();
+    expect(filters, ['0']);
+    expect(find.textContaining('Pending deletion:'), findsNothing);
+    await tester.tap(find.text('Show pending deletions'));
+    await tester.pumpAndSettle();
+    expect(filters, ['0', '1']);
+    expect(find.textContaining('Pending deletion: 2026-11-29'), findsOneWidget);
+    await tester.tap(find.text('Show pending deletions'));
+    await tester.pumpAndSettle();
+    expect(filters, ['0', '1', '0']);
+    expect(find.textContaining('Pending deletion:'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    api.close();
+  });
+
   testWidgets('kept accounts are excluded and deletion requires confirmation', (
     tester,
   ) async {
@@ -27,7 +69,7 @@ void main() {
         if (request.method == 'POST') {
           writes.add(jsonDecode(request.body) as Map<String, dynamic>);
           return http.Response(
-            '{"success":true,"deleted":["b"],"failed":[]}',
+            '{"success":true,"scheduled":["b"],"failed":[]}',
             200,
           );
         }
@@ -46,18 +88,18 @@ void main() {
       MaterialApp(home: AdminUserCleanupScreen(api: api)),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Delete selected (2)'), findsOneWidget);
+    expect(find.text('Schedule selected (2)'), findsOneWidget);
     await tester.tap(find.byType(CheckboxListTile).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete selected (1)'));
+    await tester.tap(find.text('Schedule selected (1)'));
     await tester.pumpAndSettle();
     expect(writes, isEmpty);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(writes, isEmpty);
-    await tester.tap(find.text('Delete selected (1)'));
+    await tester.tap(find.text('Schedule selected (1)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete accounts'));
+    await tester.tap(find.text('Schedule deletions'));
     await tester.pumpAndSettle();
     expect(writes, [
       {
@@ -68,7 +110,12 @@ void main() {
     ]);
     expect(find.text('aBcDeFgHiJ a'), findsOneWidget);
     expect(find.text('aBcDeFgHiJ b'), findsNothing);
-    expect(find.text('1 deleted. 0 skipped or not confirmed.'), findsOneWidget);
+    expect(
+      find.text(
+        '1 scheduled for deletion in 30 days. 0 skipped or not confirmed.',
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Next batch'));
     await tester.pumpAndSettle();
     expect(pages, [null, 'b']);
@@ -109,17 +156,17 @@ void main() {
       MaterialApp(home: AdminUserCleanupScreen(api: api)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete selected (1)'));
+    await tester.tap(find.text('Schedule selected (1)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete accounts'));
+    await tester.tap(find.text('Schedule deletions'));
     await tester.pumpAndSettle();
     expect(writes, 1);
     expect(
-      find.textContaining('Some deletions may have completed'),
+      find.textContaining('Some accounts may already be scheduled'),
       findsOneWidget,
     );
     final deleteButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Delete selected (0)'),
+      find.widgetWithText(FilledButton, 'Schedule selected (0)'),
     );
     expect(deleteButton.onPressed, isNull);
     expect(
@@ -130,7 +177,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(reads, 2);
     expect(writes, 1);
-    expect(find.text('Delete selected (1)'), findsOneWidget);
+    expect(find.text('Schedule selected (1)'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.close();
   });

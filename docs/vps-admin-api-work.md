@@ -45,3 +45,15 @@ unconfirmed outcomes; failures require refresh and never cause automatic retries
 This source update requires the matching backend cleanup routes before app rollout.
 Synthetic tests cover confirmation, keeping accounts, pagination and uncertain
 failures. No production account scan, deletion, app build or deployment is included.
+
+## Thirty-day deletion waiting period
+
+Supersedes the immediate deletion behavior described above. Both individual and
+bulk user deletion requests now schedule removal in 30 days. Pending users are
+hidden by default, with an explicit "Show pending deletions" switch and UTC
+expiry dates in Manage users. The signup-review queue excludes pending accounts.
+The backend's daily 07:00 UTC worker eventually removes due profiles, notification
+registrations and Firebase accounts while retaining staff/content protections.
+Scheduling leaves both accounts intact; repeat requests do not extend deadlines.
+This requires the matching backend source update. Website controls remain unchanged.
+No production account was marked or deleted and no new app build/deployment ran.

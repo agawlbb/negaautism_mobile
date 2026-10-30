@@ -68,9 +68,9 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${targets.length} accounts?'),
+        title: Text('Schedule ${targets.length} deletions?'),
         content: const Text(
-          'Permanently delete the selected sign-in accounts and website profiles. Name clues can flag legitimate people. Accounts with management permissions or associated content will be skipped.',
+          'Mark the selected accounts for deletion in 30 days. They remain in Firebase and the database until the daily cleanup. Name clues can flag legitimate people. Management accounts and accounts with associated content will be skipped.',
         ),
         actions: [
           TextButton(
@@ -79,7 +79,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete accounts'),
+            child: const Text('Schedule deletions'),
           ),
         ],
       ),
@@ -103,23 +103,23 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
         timeout: const Duration(minutes: 3),
       );
       if (!mounted) return;
-      final deleted = Set<String>.from(data['deleted'] as List);
+      final scheduled = Set<String>.from(data['scheduled'] as List);
       setState(() {
-        _items.removeWhere((item) => deleted.contains(item['uid']));
+        _items.removeWhere((item) => scheduled.contains(item['uid']));
         _selected.clear();
         _failures.clear();
         for (final failure in data['failed'] as List) {
           _failures[failure['uid'] as String] = failure['message'] as String;
         }
         _summary =
-            '${deleted.length} deleted. ${_failures.length} skipped or not confirmed.';
+            '${scheduled.length} scheduled for deletion in 30 days. ${_failures.length} skipped or not confirmed.';
         _needsRefresh = _failures.isNotEmpty;
       });
     } catch (error) {
       if (mounted) {
         setState(() {
           _error =
-              '$error Some deletions may have completed. Refresh this batch before continuing.';
+              '$error Some accounts may already be scheduled. Refresh this batch before continuing.';
           _selected.clear();
           _needsRefresh = true;
         });
@@ -145,7 +145,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Review up to 50 flagged names at a time. Uncheck legitimate accounts to keep them. Clues are not proof of fraud. Kept accounts are skipped for this review; reopening starts a new review.',
+              'Review up to 50 flagged names at a time. Uncheck legitimate accounts to keep them. Selected accounts will be scheduled for deletion in 30 days. Clues are not proof of fraud. Kept accounts are skipped for this review; reopening starts a new review.',
             ),
           ),
           if (_busy) const LinearProgressIndicator(),
@@ -205,7 +205,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
                     onPressed: _busy || _needsRefresh || _selected.isEmpty
                         ? null
                         : _delete,
-                    child: Text('Delete selected (${_selected.length})'),
+                    child: Text('Schedule selected (${_selected.length})'),
                   ),
                 ],
               ),
