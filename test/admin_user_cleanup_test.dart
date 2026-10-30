@@ -17,6 +17,58 @@ Map<String, dynamic> candidate(String uid) => {
 };
 
 void main() {
+  testWidgets('undelete restores only the selected pending account', (
+    tester,
+  ) async {
+    var restored = false;
+    var writes = 0;
+    final api = VpsApi(
+      token: () async => 'synthetic',
+      client: MockClient((request) async {
+        if (request.method == 'PATCH') {
+          expect(request.url.path, '/api/admin/users');
+          expect(jsonDecode(request.body), {'uid': 'pending'});
+          writes++;
+          restored = true;
+          return http.Response('{"success":true}', 200);
+        }
+        final showPending =
+            request.url.queryParameters['include_pending'] == '1';
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'actor_uid': 'manager',
+            'items': showPending && !restored
+                ? [
+                    {
+                      ...candidate('pending'),
+                      'pending_delete': true,
+                      'delete_time': '2026-11-29T12:00:00Z',
+                    },
+                  ]
+                : [],
+          }),
+          200,
+        );
+      }),
+    );
+    await tester.pumpWidget(MaterialApp(home: AdminUsersScreen(api: api)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Show pending deletions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undelete'));
+    await tester.pumpAndSettle();
+    expect(writes, 1);
+    expect(find.text('Undelete'), findsNothing);
+    expect(find.text('No matching users.'), findsOneWidget);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isTrue,
+    );
+    await tester.pumpWidget(const SizedBox());
+    api.close();
+  });
+
   testWidgets('pending accounts appear only after opting in', (tester) async {
     final filters = <String?>[];
     final api = VpsApi(

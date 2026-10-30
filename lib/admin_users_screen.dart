@@ -21,7 +21,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   List<Map<String, dynamic>> _items = [];
   String? _error, _actor;
   String _search = '';
-  bool _loading = true;
+  bool _loading = true, _restoring = false;
   bool _includePending = false;
   @override
   void initState() {
@@ -56,7 +56,25 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     }
   }
 
+  Future<void> _restore(Map<String, dynamic> item) async {
+    if (_restoring || _loading) return;
+    setState(() => _restoring = true);
+    try {
+      await _api.request('PATCH', 'admin/users', body: {'uid': item['uid']});
+      if (mounted) await _load();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error Refresh to check the current state.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _restoring = false);
+    }
+  }
+
   Future<void> _edit(Map<String, dynamic> item) async {
+    if (_restoring) return;
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -88,7 +106,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           SwitchListTile(
             title: const Text('Show pending deletions'),
             value: _includePending,
-            onChanged: _loading
+            onChanged: _loading || _restoring
                 ? null
                 : (value) {
                     _includePending = value;
@@ -106,7 +124,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
-                    onRefresh: _load,
+                    onRefresh: () async {
+                      if (!_restoring) await _load();
+                    },
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
@@ -133,6 +153,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             subtitle: Text(
                               '${item['full_name']}\n${item['email']}${item['pending_delete'] == true ? '\nPending deletion: ${item['delete_time']} (UTC)' : ''}',
                             ),
+                            trailing: item['pending_delete'] == true
+                                ? TextButton(
+                                    onPressed: _restoring || _loading
+                                        ? null
+                                        : () => _restore(item),
+                                    child: const Text('Undelete'),
+                                  )
+                                : null,
                             isThreeLine: true,
                             onTap: () => _edit(item),
                           ),

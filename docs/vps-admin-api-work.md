@@ -57,3 +57,9 @@ registrations and Firebase accounts while retaining staff/content protections.
 Scheduling leaves both accounts intact; repeat requests do not extend deadlines.
 This requires the matching backend source update. Website controls remain unchanged.
 No production account was marked or deleted and no new app build/deployment ran.
+
+The pending-deletion view now lists pending accounts alone. Its Undelete action
+clears the pending flag and deadline through the VPS, restoring the normal user
+listing and cancelling cleanup. The backend locks the profile against concurrent
+purge and refuses to clear the mark if Google already permanently removed the
+account. This changes no website controls and performs no production mutations.
