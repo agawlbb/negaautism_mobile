@@ -152,12 +152,14 @@ class AdminQueueScreen extends StatefulWidget {
 class _AdminQueueScreenState extends State<AdminQueueScreen> {
   late final VpsApi _api = widget.api ?? VpsApi();
   List<Map<String, dynamic>> _items = [];
-  bool _pending = true, _loading = true, _saving = false;
+  late bool _pending;
+  bool _loading = true, _saving = false;
   String? _error;
   String _search = '';
   @override
   void initState() {
     super.initState();
+    _pending = widget.kind != 'providers';
     _load();
   }
 
@@ -359,63 +361,118 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
                         if (items.isEmpty && _error == null)
                           const Text('No matching records.'),
                         for (final item in items)
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${item['name'] ?? item['provider_name'] ?? 'Review'}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium,
-                                  ),
-                                  if (widget.kind == 'reviews')
-                                    Text('${item['stars']} / 5 stars'),
-                                  Text(
-                                    '${item['text'] ?? item['description'] ?? ''}',
-                                  ),
-                                  Text(
-                                    _approved(item)
-                                        ? 'Approved'
-                                        : 'Awaiting approval',
-                                  ),
-                                  Wrap(
-                                    spacing: 12,
-                                    children: [
-                                      if (widget.kind == 'providers')
-                                        TextButton(
-                                          onPressed: _saving || _error != null
-                                              ? null
-                                              : () => _editProvider(item),
-                                          child: const Text('Edit'),
-                                        ),
-                                      TextButton(
-                                        onPressed: _saving || _error != null
+                          if (widget.kind == 'providers')
+                            Card(
+                              color: _approved(item)
+                                  ? null
+                                  : Colors.yellow.shade100,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${item['name'] ?? 'Provider'}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: _approved(item)
                                             ? null
-                                            : () => _change(item),
-                                        child: Text(
-                                          _approved(item)
-                                              ? 'Unapprove'
-                                              : 'Approve',
-                                        ),
+                                            : const TextStyle(
+                                                color: Colors.black,
+                                              ),
                                       ),
-                                      if (widget.kind == 'reviews' ||
-                                          widget.kind == 'providers')
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Edit',
+                                      icon: const Icon(Icons.edit_outlined),
+                                      onPressed: _saving || _error != null
+                                          ? null
+                                          : () => _editProvider(item),
+                                    ),
+                                    IconButton(
+                                      tooltip: _approved(item)
+                                          ? 'Unapprove'
+                                          : 'Approve',
+                                      icon: Icon(
+                                        _approved(item)
+                                            ? Icons.unpublished_outlined
+                                            : Icons.check_circle_outline,
+                                      ),
+                                      onPressed: _saving || _error != null
+                                          ? null
+                                          : () => _change(item),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Delete',
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: _saving || _error != null
+                                          ? null
+                                          : () => _change(item, delete: true),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${item['name'] ?? item['provider_name'] ?? 'Review'}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                    if (widget.kind == 'reviews')
+                                      Text('${item['stars']} / 5 stars'),
+                                    Text(
+                                      '${item['text'] ?? item['description'] ?? ''}',
+                                    ),
+                                    Text(
+                                      _approved(item)
+                                          ? 'Approved'
+                                          : 'Awaiting approval',
+                                    ),
+                                    Wrap(
+                                      spacing: 12,
+                                      children: [
+                                        if (widget.kind == 'providers')
+                                          TextButton(
+                                            onPressed: _saving || _error != null
+                                                ? null
+                                                : () => _editProvider(item),
+                                            child: const Text('Edit'),
+                                          ),
                                         TextButton(
                                           onPressed: _saving || _error != null
                                               ? null
-                                              : () =>
-                                                    _change(item, delete: true),
-                                          child: const Text('Delete'),
+                                              : () => _change(item),
+                                          child: Text(
+                                            _approved(item)
+                                                ? 'Unapprove'
+                                                : 'Approve',
+                                          ),
                                         ),
-                                    ],
-                                  ),
-                                ],
+                                        if (widget.kind == 'reviews' ||
+                                            widget.kind == 'providers')
+                                          TextButton(
+                                            onPressed: _saving || _error != null
+                                                ? null
+                                                : () => _change(
+                                                    item,
+                                                    delete: true,
+                                                  ),
+                                            child: const Text('Delete'),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
                       ],
                     ),
                   ),
