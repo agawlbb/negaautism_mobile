@@ -68,10 +68,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Schedule ${targets.length} deletions?'),
-        content: const Text(
-          'Mark the selected accounts for deletion in 30 days. They remain in Firebase and the database until the daily cleanup. Name clues can flag legitimate people. Management accounts and accounts with associated content will be skipped.',
-        ),
+        title: Text('Delete ${targets.length} accounts?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -79,7 +76,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Schedule deletions'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -112,14 +109,13 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
           _failures[failure['uid'] as String] = failure['message'] as String;
         }
         _summary =
-            '${scheduled.length} scheduled for deletion in 30 days. ${_failures.length} skipped or not confirmed.';
+            '${scheduled.length} deleted.${_failures.isEmpty ? '' : ' ${_failures.length} skipped.'}';
         _needsRefresh = _failures.isNotEmpty;
       });
     } catch (error) {
       if (mounted) {
         setState(() {
-          _error =
-              '$error Some accounts may already be scheduled. Refresh this batch before continuing.';
+          _error = '$error Refresh before retrying.';
           _selected.clear();
           _needsRefresh = true;
         });
@@ -142,12 +138,6 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
       appBar: AppBar(title: const Text('Review suspicious signups')),
       body: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Review up to 50 flagged names at a time. Uncheck legitimate accounts to keep them. Selected accounts will be scheduled for deletion in 30 days. Clues are not proof of fraud. Kept accounts are skipped for this review; reopening starts a new review.',
-            ),
-          ),
           if (_busy) const LinearProgressIndicator(),
           if (_error != null)
             Padding(padding: const EdgeInsets.all(12), child: Text(_error!)),
@@ -155,9 +145,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
             Padding(padding: const EdgeInsets.all(12), child: Text(_summary!)),
           Expanded(
             child: !_busy && _items.isEmpty && _error == null
-                ? const Center(
-                    child: Text('No more flagged accounts in this review.'),
-                  )
+                ? const Center(child: Text('No flagged accounts.'))
                 : ListView.builder(
                     itemCount: _items.length,
                     itemBuilder: (context, index) {
@@ -176,7 +164,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
                               }),
                         title: Text(item['full_name'] as String),
                         subtitle: Text(
-                          '${item['email']}\n${item['username']}\n${(item['reasons'] as List).join('; ')}${_failures.containsKey(uid) ? '\n${_failures[uid]}' : ''}',
+                          '${item['username']}\n${item['email']}${_failures.containsKey(uid) ? '\n${_failures[uid]}' : ''}',
                         ),
                         controlAffinity: ListTileControlAffinity.leading,
                       );
@@ -205,7 +193,7 @@ class _AdminUserCleanupScreenState extends State<AdminUserCleanupScreen> {
                     onPressed: _busy || _needsRefresh || _selected.isEmpty
                         ? null
                         : _delete,
-                    child: Text('Schedule selected (${_selected.length})'),
+                    child: Text('Delete selected (${_selected.length})'),
                   ),
                 ],
               ),

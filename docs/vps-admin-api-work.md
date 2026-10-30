@@ -63,3 +63,9 @@ clears the pending flag and deadline through the VPS, restoring the normal user
 listing and cancelling cleanup. The backend locks the profile against concurrent
 purge and refuses to clear the mark if Google already permanently removed the
 account. This changes no website controls and performs no production mutations.
+
+Bulk cleanup now submits one selected list and the backend uses a batched Google
+lookup, batched relationship checks, one SQL update and one transaction. The app
+uses Delete labels, a count-only confirmation, and compact account details with
+no introductory paragraph or flag explanations. The 30-day delay and Undelete
+are preserved. These source changes are not a deployment or app build.

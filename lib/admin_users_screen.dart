@@ -220,13 +220,9 @@ class _UserEditorState extends State<_UserEditor> {
       final approved = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(
-            delete ? 'Schedule user deletion?' : 'Change user permissions?',
-          ),
+          title: Text(delete ? 'Delete user?' : 'Change user permissions?'),
           content: Text(
-            delete
-                ? 'The account will be marked for deletion in 30 days. Firebase and the website profile remain until the daily cleanup removes them. Management accounts and accounts with associated content are protected. An existing deadline will not be extended.'
-                : 'These permissions control what this user can manage on the site.',
+            delete ? 'You can undelete this user from pending deletions.' : 'These permissions control what this user can manage on the site.',
           ),
           actions: [
             TextButton(
@@ -235,7 +231,7 @@ class _UserEditorState extends State<_UserEditor> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(delete ? 'Schedule deletion' : 'Save'),
+              child: Text(delete ? 'Delete' : 'Save'),
             ),
           ],
         ),
@@ -283,9 +279,7 @@ class _UserEditorState extends State<_UserEditor> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             if (widget.user['pending_delete'] == true)
-              Text(
-                'Pending deletion: ${widget.user['delete_time']} (UTC). Editing this profile does not cancel deletion.',
-              ),
+              Text('Pending deletion: ${widget.user['delete_time']} (UTC).'),
             if (widget.user['has_profile'] != true)
               const Text('This account has no website profile to edit.'),
             for (final entry in _fields.entries)
@@ -350,7 +344,7 @@ class _UserEditorState extends State<_UserEditor> {
             if (!_self)
               TextButton(
                 onPressed: _saving ? null : () => _save(delete: true),
-                child: const Text('Schedule deletion'),
+                child: const Text('Delete user'),
               ),
           ],
         ),

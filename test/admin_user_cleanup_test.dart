@@ -140,18 +140,23 @@ void main() {
       MaterialApp(home: AdminUserCleanupScreen(api: api)),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Schedule selected (2)'), findsOneWidget);
+    expect(find.text('Delete selected (2)'), findsOneWidget);
+    expect(find.textContaining('Review up to 50'), findsNothing);
+    expect(
+      find.textContaining('Repeated upper/lowercase switching'),
+      findsNothing,
+    );
     await tester.tap(find.byType(CheckboxListTile).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Schedule selected (1)'));
+    await tester.tap(find.text('Delete selected (1)'));
     await tester.pumpAndSettle();
     expect(writes, isEmpty);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(writes, isEmpty);
-    await tester.tap(find.text('Schedule selected (1)'));
+    await tester.tap(find.text('Delete selected (1)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Schedule deletions'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(writes, [
       {
@@ -162,19 +167,11 @@ void main() {
     ]);
     expect(find.text('aBcDeFgHiJ a'), findsOneWidget);
     expect(find.text('aBcDeFgHiJ b'), findsNothing);
-    expect(
-      find.text(
-        '1 scheduled for deletion in 30 days. 0 skipped or not confirmed.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('1 deleted.'), findsOneWidget);
     await tester.tap(find.text('Next batch'));
     await tester.pumpAndSettle();
     expect(pages, [null, 'b']);
-    expect(
-      find.text('No more flagged accounts in this review.'),
-      findsOneWidget,
-    );
+    expect(find.text('No flagged accounts.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.close();
   });
@@ -208,17 +205,14 @@ void main() {
       MaterialApp(home: AdminUserCleanupScreen(api: api)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Schedule selected (1)'));
+    await tester.tap(find.text('Delete selected (1)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Schedule deletions'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(writes, 1);
-    expect(
-      find.textContaining('Some accounts may already be scheduled'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Refresh before retrying.'), findsOneWidget);
     final deleteButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Schedule selected (0)'),
+      find.widgetWithText(FilledButton, 'Delete selected (0)'),
     );
     expect(deleteButton.onPressed, isNull);
     expect(
@@ -229,7 +223,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(reads, 2);
     expect(writes, 1);
-    expect(find.text('Schedule selected (1)'), findsOneWidget);
+    expect(find.text('Delete selected (1)'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     api.close();
   });
