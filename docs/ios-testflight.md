@@ -1,5 +1,21 @@
 # iOS and TestFlight
 
+## App icon correction
+
+Task `fix/ios-app-icon`, based on fetched `origin/master` at `65f0838`.
+The iOS AppIcon catalog still held Flutter's template artwork while Android used
+the supplied NEGA logo. All 15 PNG files now use the existing project artwork
+from `android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png`, flattened onto
+white for opaque RGB iOS assets. The existing catalog and Xcode AppIcon settings
+are unchanged. Every declared pixel size and absence of alpha were verified;
+the 180-pixel iPhone icon was visually inspected. The available project launcher
+source is 192 pixels, so the 1024-pixel marketing image is upscaled from that
+source. No artwork was redesigned and no dependency was added.
+
+This is an asset-only source correction. No macOS build, TestFlight upload or
+installed-app change was performed. The corrected icon requires a subsequent
+build and release by the release task.
+
 ## Startup correction — October 30, 2026
 
 Task `codex/ios-startup-scene-fix`, based on fetched master `1698c88`.
