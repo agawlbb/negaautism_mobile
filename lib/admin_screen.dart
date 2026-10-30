@@ -1,4 +1,5 @@
 import 'admin_users_screen.dart';
+import 'admin_user_cleanup_screen.dart';
 import 'admin_pdf_screen.dart';
 import 'admin_taxonomy_screen.dart';
 import 'provider_edit_screen.dart';
@@ -108,12 +109,18 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                           _open(const AdminQueueScreen(kind: 'reviews')),
                     ),
                   ],
-                  if (permissions['manage_users'] == true)
+                  if (permissions['manage_users'] == true) ...[
                     ListTile(
                       leading: const Icon(Icons.people_outline),
                       title: const Text('Users'),
                       onTap: () => _open(const AdminUsersScreen()),
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.person_remove_outlined),
+                      title: const Text('Review suspicious signups'),
+                      onTap: () => _open(const AdminUserCleanupScreen()),
+                    ),
+                  ],
                   if (permissions['manage_categories'] == true) ...[
                     ListTile(
                       leading: const Icon(Icons.category_outlined),

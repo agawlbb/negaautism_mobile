@@ -32,3 +32,16 @@ account metadata access and user read/update/delete permissions. No accounts,
 policies, provider records or live logo files were mutated. The mobile code is
 unchanged; its previous 54-test/analysis result remains the client checkpoint.
 All changes remain on local task branches, unmerged and undeployed.
+
+## Suspicious signup review
+
+Continues on the same feature branch from `0a3b6ab`. User managers have a
+"Review suspicious signups" admin action. It shows up to 50 flagged names with
+email, username and reasons; reviewers uncheck legitimate users before confirming
+bulk deletion. Kept accounts are skipped for this review session, not permanently
+allowlisted. The VPS rechecks selected names, management permissions and content
+references. Per-account results distinguish deleted accounts from conflicts or
+unconfirmed outcomes; failures require refresh and never cause automatic retries.
+This source update requires the matching backend cleanup routes before app rollout.
+Synthetic tests cover confirmation, keeping accounts, pagination and uncertain
+failures. No production account scan, deletion, app build or deployment is included.
