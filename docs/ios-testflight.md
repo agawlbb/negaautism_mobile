@@ -164,3 +164,17 @@ VALID with usesNonExemptEncryption=false. It was assigned to the existing Family
 testers group c5aba762-58f3-41d7-bf03-b7c1fffa240c and confirmed IN_BETA_TESTING.
 No testers were invited and no group membership or app access was changed.
 The paired VPS migration and backend deployment were completed before release.
+
+## Provider approval editor release - November 10, 2026
+
+The user approved merge and both app releases. iOS 2.1.0 (11) uses source commit
+`6dac610d6e42b4429e6fc9d92e4b069c9e86aaa4`. Workflow 42921900557 passed
+analysis, Flutter tests, six signing tests, simulator startup, signed archive
+creation, exported-package verification and App Store Connect upload:
+https://github.com/agawlbb/negaautism_mobile/actions/runs/42921900557
+
+Apple build `e0f1ccc2-19fa-4c81-a077-f7f0eca1bfd1` processed as `VALID` with
+`usesNonExemptEncryption=false`. Assignment to the existing Family testers group
+was verified, and internal state is `IN_BETA_TESTING`. No testers were invited
+and no external beta or public App Store submission was made. Physical-device
+acceptance remains separate from the passing simulator startup check.

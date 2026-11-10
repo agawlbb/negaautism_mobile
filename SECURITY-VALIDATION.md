@@ -243,3 +243,28 @@ iOS version 2.1.0 (10) passed workflow 42911777767, including simulator startup 
 strict signed IPA verification, and is VALID / IN_BETA_TESTING in Family testers.
 See docs/ios-testflight.md. No physical-device installation or notification was
 used for validation. Both release workflows are complete; no build is running.
+
+## November 10, 2026 - provider approval editor release
+
+The user approved merging the provider approval editor and releasing both apps.
+Source commit `6dac610d6e42b4429e6fc9d92e4b069c9e86aaa4` is merged into
+`master`; its task branch was deleted locally and remotely. Flutter analysis
+and all 64 tests passed. Provider list rows show only names and highlight
+unapproved providers yellow; confirmed approval actions are in the editor.
+
+Android 2.1.0/build 20102 was built in the VM development container with the
+existing dependency lock, Flutter 3.47.8/Dart 3.13.7 and JDK 21. The canonical
+source and minimum API 23 were preserved. Signature, existing signing certificate,
+package/version and ZIP alignment checks passed. The signed APK is
+`NEGA-Autism-2.1.0-20102.apk`, 57,316,168 bytes, SHA-256
+`a0c65844b05cea51513901e831ef43a11339219f0545a73ab7b18ec60b10a0c9`.
+The APK and checksum were uploaded to the existing Drive folder; a downloaded
+copy matched the local SHA-256. No older files or sharing settings were changed.
+Download: https://drive.google.com/file/d/1o_lwVKkFgvGNEtyOjGhfTx9f3jtNqqQJ/view
+
+iOS 2.1.0 (11) passed workflow 42921900557, including signing tests, analysis,
+Flutter tests, simulator startup, signed archive/export verification and upload.
+Apple reports `VALID`, `usesNonExemptEncryption=false` and `IN_BETA_TESTING`;
+build 11 is assigned to the existing Family testers internal group.
+No public App Store submission, device installation, backend deployment or
+production provider mutation was performed. Both mobile releases are complete.
