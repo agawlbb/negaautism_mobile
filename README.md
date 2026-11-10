@@ -207,3 +207,20 @@ Android/iOS document-picker code still requires platform build/device validation
 Private server credentials stay outside source and are never client assets. No
 forum work, app builds, installation or production rollout accompany this source
 preparation. Validate the prepared VPS deployment before distributing clients.
+
+## Administrator import notes
+
+Providers imported through the VPS `POST /api/admin/providers/import` endpoint
+start unapproved and do not send new-provider notifications. Provider managers
+can read import notes in the administrator provider list and view/edit them in
+the provider editor, including after approval. Notes are private plain text,
+limited to 10,000 UTF-8 bytes; they are excluded from public provider models,
+displays and PDFs. Editing from the public directory first loads notes through
+`GET /api/admin/providers/{id}` with a fresh manager token. A failed load blocks
+saving until retry succeeds, so an unread note is not accidentally cleared.
+
+Rollout requires the VPS repository's
+`migrations/20261110_provider_admin_notes.sql` migration and backend deployment
+before distributing this app version. The API contract and importer example are
+in that repository's `docs/mobile-admin-api.md`. This source change does not
+build, release or install the app.

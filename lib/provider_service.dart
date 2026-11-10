@@ -153,6 +153,22 @@ class ProviderService {
     return ProviderDirectory.fromJson(_response(response));
   }
 
+  Future<String> loadAdminNotes({
+    required String token,
+    required int id,
+  }) async {
+    if (token.isEmpty) {
+      throw const ProviderApiException('Sign in to manage providers.');
+    }
+    final response = await _client
+        .get(
+          ApiEndpoints.uri('admin/providers/$id'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 20));
+    return (_response(response)['item'] as Map)['admin_notes'] as String? ?? '';
+  }
+
   Future<String> save({
     required String token,
     int? id,
@@ -163,6 +179,7 @@ class ProviderService {
     required int categoryId,
     required int countyId,
     ProviderLogo? logo,
+    String? adminNotes,
   }) async {
     if (token.isEmpty) {
       throw const ProviderApiException('Sign in to manage providers.');
@@ -174,6 +191,7 @@ class ProviderService {
       'phone_number': phone.trim(),
       'category_id': categoryId,
       'county_id': countyId,
+      if (adminNotes != null) 'admin_notes': adminNotes.trim(),
     };
     // Never retry a write automatically: a timeout may follow a successful save.
     final uri = id == null

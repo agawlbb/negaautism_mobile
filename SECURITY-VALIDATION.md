@@ -202,3 +202,20 @@ preceding source checkpoint. This backend revision introduces no mobile dependen
 or SDK change. Native Kotlin/Swift compilation and document-picker device tests
 remain outstanding. No app build, installation, production content/user mutation,
 notification, deployment or forum work accompanies this revision.
+
+
+## November 10, 2026 - administrator import notes
+
+Flutter analysis passed with no issues, and all 62 Flutter tests passed in the
+VM development container. Synthetic HTTP/widget tests cover authenticated notes
+retrieval, edited-note saves, retention after approval, and a failed notes load
+blocking saves until retry succeeds. Public DirectoryProvider models do not
+contain administrator notes; the server independently authorizes private reads
+and writes with current provider-management permission. Existing public directory,
+provider save, extraction, PDF/admin and preference tests remain passing.
+
+The paired VPS implementation includes a nullable admin_notes database migration,
+a pending-only silent import endpoint, private notes detail/list responses and
+optional notes on provider saves. Deploy that migration and backend before an
+updated mobile release. No production data, notification, deployment, app build,
+release, installation or signing operation was performed for this change.

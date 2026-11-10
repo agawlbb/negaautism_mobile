@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class ProviderEditScreen extends StatefulWidget {
   final ProviderDirectory directory;
   final DirectoryProvider? provider;
   final FirebaseAuth? auth;
+  final String? initialAdminNotes;
   final ProviderExtractionService? extractionService;
   const ProviderEditScreen({
     super.key,
@@ -22,6 +24,7 @@ class ProviderEditScreen extends StatefulWidget {
     required this.directory,
     this.provider,
     this.auth,
+    this.initialAdminNotes,
     this.extractionService,
   });
   @override
@@ -31,10 +34,15 @@ class ProviderEditScreen extends StatefulWidget {
 class _ProviderEditScreenState extends State<ProviderEditScreen> {
   final _form = GlobalKey<FormState>();
   FirebaseAuth get _auth => widget.auth ?? FirebaseAuth.instance;
-  late final TextEditingController _name, _website, _description, _phone;
+  late final TextEditingController _name,
+      _website,
+      _description,
+      _phone,
+      _adminNotes;
   late final String? _uid;
   int? _category, _county;
   ProviderLogo? _logo;
+  bool _loadingNotes = true;
   bool _saving = false;
   bool _extracting = false;
   String _progress = '';
@@ -51,17 +59,51 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     _website = TextEditingController(text: p?.website);
     _description = TextEditingController(text: p?.description);
     _phone = TextEditingController(text: p?.phone);
+    _adminNotes = TextEditingController();
     _category = widget.directory.categories.any((c) => c.id == p?.categoryId)
         ? p?.categoryId
         : null;
     _county = widget.directory.counties.any((c) => c.id == p?.countyId)
         ? p?.countyId
         : null;
+    _loadAdminNotes();
+  }
+
+  Future<void> _loadAdminNotes() async {
+    setState(() {
+      _loadingNotes = true;
+      _error = null;
+    });
+    try {
+      final token = await _freshToken();
+      final notes =
+          widget.initialAdminNotes ??
+          (widget.provider == null
+              ? ''
+              : await widget.service.loadAdminNotes(
+                  token: token,
+                  id: widget.provider!.id,
+                ));
+      if (mounted) {
+        setState(() {
+          _adminNotes.text = notes;
+          _loadingNotes = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = _saveError(e));
+    }
   }
 
   @override
   void dispose() {
-    for (final controller in [_name, _website, _description, _phone]) {
+    for (final controller in [
+      _name,
+      _website,
+      _description,
+      _phone,
+      _adminNotes,
+    ]) {
       controller.dispose();
     }
     _extraction?.close();
@@ -254,11 +296,12 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
       categoryId: category as int,
       countyId: county as int,
       logo: fields['logo'] as ProviderLogo?,
+      adminNotes: _adminNotes.text,
     );
   }
 
   Future<String> _addFromReview(Map<String, dynamic> selected) async {
-    if (_saving) {
+    if (_loadingNotes || _saving) {
       throw const ProviderApiException('An add is already in progress.');
     }
     setState(() {
@@ -275,7 +318,12 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
   }
 
   Future<void> _save() async {
-    if (_saving || _extracting || !_form.currentState!.validate()) return;
+    if (_loadingNotes ||
+        _saving ||
+        _extracting ||
+        !_form.currentState!.validate()) {
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -306,7 +354,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
         items: choices
             .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
             .toList(),
-        onChanged: _saving || _extracting ? null : change,
+        onChanged: _loadingNotes || _saving || _extracting ? null : change,
         validator: (v) => v == null ? 'Choose a ${label.toLowerCase()}' : null,
       ),
     );
@@ -332,7 +380,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
           children: [
             TextFormField(
               controller: _name,
-              enabled: !_saving && !_extracting,
+              enabled: !_loadingNotes && !_saving && !_extracting,
               maxLength: 255,
               decoration: const InputDecoration(labelText: 'Provider name'),
               validator: (v) => v == null || v.trim().isEmpty
@@ -341,14 +389,14 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
             ),
             TextFormField(
               controller: _description,
-              enabled: !_saving && !_extracting,
+              enabled: !_loadingNotes && !_saving && !_extracting,
               maxLength: 10000,
               maxLines: 4,
               decoration: const InputDecoration(labelText: 'Description'),
             ),
             TextFormField(
               controller: _website,
-              enabled: !_saving && !_extracting,
+              enabled: !_loadingNotes && !_saving && !_extracting,
               maxLength: 255,
               keyboardType: TextInputType.url,
               decoration: const InputDecoration(
@@ -368,7 +416,9 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
             ),
             if (widget.provider == null) ...[
               OutlinedButton.icon(
-                onPressed: _saving || _extracting ? null : _fillFromWebsite,
+                onPressed: _loadingNotes || _saving || _extracting
+                    ? null
+                    : _fillFromWebsite,
                 icon: const Icon(Icons.auto_awesome_outlined),
                 label: Text(
                   _extracting ? 'Reading website…' : 'Fill from website',
@@ -387,12 +437,12 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
             ProviderLogoInput(
               logo: _logo,
               existingUrl: providerLogoUrl(widget.provider?.logo ?? ''),
-              enabled: !_saving && !_extracting,
+              enabled: !_loadingNotes && !_saving && !_extracting,
               onChanged: (logo) => setState(() => _logo = logo),
             ),
             TextFormField(
               controller: _phone,
-              enabled: !_saving && !_extracting,
+              enabled: !_loadingNotes && !_saving && !_extracting,
               maxLength: 50,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Phone (optional)'),
@@ -410,6 +460,28 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
               (v) => setState(() => _county = v),
             ),
             const SizedBox(height: 16),
+            if (_loadingNotes) ...[
+              if (_error == null) const LinearProgressIndicator(),
+              if (_error != null)
+                TextButton(
+                  onPressed: _loadAdminNotes,
+                  child: const Text('Retry loading administrator notes'),
+                ),
+            ] else
+              TextFormField(
+                controller: _adminNotes,
+                enabled: !_saving && !_extracting,
+                minLines: 3,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                  labelText: 'Administrator notes',
+                  helperText: 'Visible only to provider administrators.',
+                ),
+                validator: (value) =>
+                    utf8.encode((value ?? '').trim()).length > 10000
+                    ? 'Administrator notes must be at most 10,000 UTF-8 bytes.'
+                    : null,
+              ),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -419,7 +491,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
                 ),
               ),
             ElevatedButton(
-              onPressed: _saving || _extracting ? null : _save,
+              onPressed: _loadingNotes || _saving || _extracting ? null : _save,
               child: Text(
                 _saving
                     ? 'Saving…'

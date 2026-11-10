@@ -7,6 +7,55 @@ import 'package:negaautism_mobile/provider_service.dart';
 
 void main() {
   test(
+    'private notes use authenticated admin detail and explicit saves',
+    () async {
+      var reads = 0, writes = 0;
+      final service = ProviderService(
+        client: MockClient((request) async {
+          expect(request.headers['Authorization'], 'Bearer synthetic');
+          if (request.method == 'GET') {
+            reads++;
+            expect(request.url.path, '/api/admin/providers/7');
+            return http.Response(
+              '{"success":true,"item":{"id":7,"admin_notes":"Private source"}}',
+              200,
+            );
+          }
+          writes++;
+          expect(
+            (jsonDecode(request.body) as Map)['admin_notes'],
+            'Edited notes',
+          );
+          return http.Response('{"success":true,"message":"Saved"}', 200);
+        }),
+      );
+      addTearDown(service.close);
+      expect(
+        await service.loadAdminNotes(token: 'synthetic', id: 7),
+        'Private source',
+      );
+      await service.save(
+        token: 'synthetic',
+        id: 7,
+        name: 'Clinic',
+        website: '',
+        description: '',
+        phone: '',
+        categoryId: 1,
+        countyId: 1,
+        adminNotes: ' Edited notes ',
+      );
+      expect(reads, 1);
+      expect(writes, 1);
+      await expectLater(
+        service.loadAdminNotes(token: '', id: 7),
+        throwsA(isA<ProviderApiException>()),
+      );
+      expect(reads, 1);
+    },
+  );
+
+  test(
     'public listing sends filters without credentials and decodes SQL IDs',
     () async {
       final service = ProviderService(

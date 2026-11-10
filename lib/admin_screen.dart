@@ -219,6 +219,7 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
             service: service,
             directory: directory,
             provider: provider,
+            initialAdminNotes: item?['admin_notes'] as String? ?? '',
           ),
         ),
       );
@@ -378,15 +379,38 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        '${item['name'] ?? 'Provider'}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: _approved(item)
-                                            ? null
-                                            : const TextStyle(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${item['name'] ?? 'Provider'}',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: _approved(item)
+                                                ? null
+                                                : const TextStyle(
+                                                    color: Colors.black,
+                                                  ),
+                                          ),
+                                          if ((item['admin_notes'] as String? ??
+                                                  '')
+                                              .isNotEmpty) ...[
+                                            const Text(
+                                              'Administrator notes',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
                                                 color: Colors.black,
                                               ),
+                                            ),
+                                            SelectableText(
+                                              item['admin_notes'] as String,
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                     IconButton(
