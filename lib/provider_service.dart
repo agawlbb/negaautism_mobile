@@ -169,6 +169,27 @@ class ProviderService {
     return (_response(response)['item'] as Map)['admin_notes'] as String? ?? '';
   }
 
+  Future<void> setApproval({
+    required String token,
+    required int id,
+    required bool approved,
+  }) async {
+    if (token.isEmpty) {
+      throw const ProviderApiException('Sign in to manage providers.');
+    }
+    final response = await _client
+        .patch(
+          ApiEndpoints.uri('admin/providers/$id/approval'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'approved': approved}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _response(response);
+  }
+
   Future<String> save({
     required String token,
     int? id,

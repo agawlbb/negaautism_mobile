@@ -220,6 +220,7 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
             directory: directory,
             provider: provider,
             initialAdminNotes: item?['admin_notes'] as String? ?? '',
+            initialApproved: item == null ? true : _approved(item),
           ),
         ),
       );
@@ -379,38 +380,10 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${item['name'] ?? 'Provider'}',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: _approved(item)
-                                                ? null
-                                                : const TextStyle(
-                                                    color: Colors.black,
-                                                  ),
-                                          ),
-                                          if ((item['admin_notes'] as String? ??
-                                                  '')
-                                              .isNotEmpty) ...[
-                                            const Text(
-                                              'Administrator notes',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            SelectableText(
-                                              item['admin_notes'] as String,
-                                              style: const TextStyle(
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
+                                      child: Text(
+                                        '${item['name'] ?? 'Provider'}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     IconButton(
@@ -419,19 +392,6 @@ class _AdminQueueScreenState extends State<AdminQueueScreen> {
                                       onPressed: _saving || _error != null
                                           ? null
                                           : () => _editProvider(item),
-                                    ),
-                                    IconButton(
-                                      tooltip: _approved(item)
-                                          ? 'Unapprove'
-                                          : 'Approve',
-                                      icon: Icon(
-                                        _approved(item)
-                                            ? Icons.unpublished_outlined
-                                            : Icons.check_circle_outline,
-                                      ),
-                                      onPressed: _saving || _error != null
-                                          ? null
-                                          : () => _change(item),
                                     ),
                                     IconButton(
                                       tooltip: 'Delete',

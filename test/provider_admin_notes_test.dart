@@ -12,57 +12,114 @@ import 'package:negaautism_mobile/vps_api.dart';
 import 'provider_add_navigation_test.dart' show ManagerAuth, directory;
 
 void main() {
-  testWidgets('administrator queue retains import notes after approval', (
-    tester,
-  ) async {
-    var approved = false;
-    final api = VpsApi(
-      token: () async => 'synthetic',
-      client: MockClient((request) async {
-        if (request.method == 'PATCH') {
-          expect(jsonDecode(request.body), {'approved': true});
-          approved = true;
-          return http.Response('{"success":true}', 200);
-        }
-        return http.Response(
-          jsonEncode({
-            'success': true,
-            'items': [
-              {
-                'id': 7,
-                'name': 'Imported clinic',
-                'approved': approved ? 1 : 0,
-                'admin_notes': 'Check the service area with the source.',
-              },
-            ],
+  testWidgets(
+    'provider list shows names with yellow pending highlighting only',
+    (tester) async {
+      final api = VpsApi(
+        token: () async => 'synthetic',
+        client: MockClient(
+          (request) async => http.Response(
+            jsonEncode({
+              'success': true,
+              'items': [
+                {
+                  'id': 7,
+                  'name': 'Imported clinic',
+                  'approved': 0,
+                  'admin_notes': 'Private source',
+                },
+                {
+                  'id': 8,
+                  'name': 'Approved clinic',
+                  'approved': 1,
+                  'admin_notes': 'Other private source',
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+      );
+      addTearDown(api.close);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AdminQueueScreen(kind: 'providers', api: api),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Imported clinic'), findsOneWidget);
+      expect(find.text('Approved clinic'), findsOneWidget);
+      expect(find.textContaining('private source'), findsNothing);
+      expect(find.text('Private source'), findsNothing);
+      expect(find.byTooltip('Approve'), findsNothing);
+      expect(find.byTooltip('Unapprove'), findsNothing);
+      final cards = tester.widgetList<Card>(find.byType(Card)).toList();
+      expect(cards[0].color, Colors.yellow.shade100);
+      expect(cards[1].color, isNull);
+    },
+  );
+
+  for (final initiallyApproved in [false, true]) {
+    testWidgets(
+      'editor toggles approval after confirmation ($initiallyApproved)',
+      (tester) async {
+        final writes = <bool>[];
+        final service = ProviderService(
+          client: MockClient((request) async {
+            expect(request.method, 'PATCH');
+            expect(request.url.path, '/api/admin/providers/7/approval');
+            expect(
+              request.headers['Authorization'],
+              'Bearer synthetic-manager-token',
+            );
+            writes.add((jsonDecode(request.body) as Map)['approved'] as bool);
+            return http.Response('{"success":true}', 200);
           }),
-          200,
         );
-      }),
+        addTearDown(service.close);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ProviderEditScreen(
+              service: service,
+              directory: directory(),
+              auth: ManagerAuth(),
+              initialAdminNotes: 'Private source',
+              initialApproved: initiallyApproved,
+              provider: DirectoryProvider.fromJson({
+                'id': 7,
+                'name': 'Clinic',
+                'category_id': 1,
+                'county_id': 2,
+                'category_name': 'Therapy',
+                'county_name': 'Multiple',
+              }),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text(initiallyApproved ? 'Approved' : 'Unapproved'),
+          findsOneWidget,
+        );
+        final action = initiallyApproved ? 'Unapprove' : 'Approve';
+        await tester.tap(find.widgetWithText(OutlinedButton, action));
+        await tester.pumpAndSettle();
+        expect(writes, isEmpty);
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(writes, isEmpty);
+        await tester.tap(find.widgetWithText(OutlinedButton, action));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, action));
+        await tester.pumpAndSettle();
+        expect(writes, [!initiallyApproved]);
+        expect(
+          find.text(initiallyApproved ? 'Unapproved' : 'Approved'),
+          findsOneWidget,
+        );
+      },
     );
-    addTearDown(api.close);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AdminQueueScreen(kind: 'providers', api: api),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Administrator notes'), findsOneWidget);
-    expect(
-      find.text('Check the service area with the source.'),
-      findsOneWidget,
-    );
-    await tester.tap(find.byTooltip('Approve'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
-    await tester.pumpAndSettle();
-    expect(approved, isTrue);
-    expect(find.byTooltip('Unapprove'), findsOneWidget);
-    expect(
-      find.text('Check the service area with the source.'),
-      findsOneWidget,
-    );
-  });
+  }
 
   for (final failedLoad in [false, true]) {
     testWidgets(

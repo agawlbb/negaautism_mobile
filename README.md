@@ -212,8 +212,10 @@ preparation. Validate the prepared VPS deployment before distributing clients.
 
 Providers imported through the VPS `POST /api/admin/providers/import` endpoint
 start unapproved and do not send new-provider notifications. Provider managers
-can read import notes in the administrator provider list and view/edit them in
-the provider editor, including after approval. Notes are private plain text,
+can view/edit import notes in the provider editor, including after approval. The manage-providers list shows
+provider names only, with yellow highlighting for unapproved providers. Existing
+provider editors show approval status and offer confirmed approve/unapprove
+actions. Notes are private plain text,
 limited to 10,000 UTF-8 bytes; they are excluded from public provider models,
 displays and PDFs. Editing from the public directory first loads notes through
 `GET /api/admin/providers/{id}` with a fresh manager token. A failed load blocks

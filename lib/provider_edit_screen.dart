@@ -17,6 +17,7 @@ class ProviderEditScreen extends StatefulWidget {
   final DirectoryProvider? provider;
   final FirebaseAuth? auth;
   final String? initialAdminNotes;
+  final bool initialApproved;
   final ProviderExtractionService? extractionService;
   const ProviderEditScreen({
     super.key,
@@ -25,6 +26,7 @@ class ProviderEditScreen extends StatefulWidget {
     this.provider,
     this.auth,
     this.initialAdminNotes,
+    this.initialApproved = true,
     this.extractionService,
   });
   @override
@@ -43,6 +45,8 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
   int? _category, _county;
   ProviderLogo? _logo;
   bool _loadingNotes = true;
+  late bool _approved;
+  bool _approvalUncertain = false;
   bool _saving = false;
   bool _extracting = false;
   String _progress = '';
@@ -54,6 +58,7 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
   void initState() {
     super.initState();
     final p = widget.provider;
+    _approved = widget.initialApproved;
     _uid = _auth.currentUser?.uid;
     _name = TextEditingController(text: p?.name);
     _website = TextEditingController(text: p?.website);
@@ -317,6 +322,52 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
     }
   }
 
+  Future<void> _toggleApproval() async {
+    if (_loadingNotes || _saving || _approvalUncertain) return;
+    final target = !_approved;
+    final action = target ? 'Approve' : 'Unapprove';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$action ${_name.text}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final token = await _freshToken();
+      await widget.service.setApproval(
+        token: token,
+        id: widget.provider!.id,
+        approved: target,
+      );
+      if (mounted) setState(() => _approved = target);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _approvalUncertain = true;
+          _error =
+              '${_saveError(e)} Reopen this provider to check its approval status before trying again.';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _save() async {
     if (_loadingNotes ||
         _saving ||
@@ -378,6 +429,23 @@ class _ProviderEditScreenState extends State<ProviderEditScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (widget.provider != null)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  _approvalUncertain
+                      ? 'Approval status unknown'
+                      : _approved
+                      ? 'Approved'
+                      : 'Unapproved',
+                ),
+                trailing: OutlinedButton(
+                  onPressed: _loadingNotes || _saving || _approvalUncertain
+                      ? null
+                      : _toggleApproval,
+                  child: Text(_approved ? 'Unapprove' : 'Approve'),
+                ),
+              ),
             TextFormField(
               controller: _name,
               enabled: !_loadingNotes && !_saving && !_extracting,
