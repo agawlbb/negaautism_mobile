@@ -150,3 +150,17 @@ cryptography. No custom encryption implementation is introduced.
   requires that separate configuration; enabling the signing entitlement alone
   does not configure Firebase's connection to Apple. No real notifications were
   sent. Physical iPhone acceptance remains a tester task.
+
+
+## Provider import notes release - November 10, 2026
+
+Source f6e9c26 was merged to master; the feature branch was deleted locally and
+remotely. Run 42911777767 (workflow build 10) passed all tests, simulator startup,
+signed archive creation, exported IPA verification and App Store Connect upload:
+https://github.com/agawlbb/negaautism_mobile/actions/runs/42911777767
+
+Version 2.1.0 (10), build ID 5996db91-d5cd-4071-a2b6-84351b3d88ce, processed as
+VALID with usesNonExemptEncryption=false. It was assigned to the existing Family
+testers group c5aba762-58f3-41d7-bf03-b7c1fffa240c and confirmed IN_BETA_TESTING.
+No testers were invited and no group membership or app access was changed.
+The paired VPS migration and backend deployment were completed before release.

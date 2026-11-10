@@ -219,3 +219,27 @@ a pending-only silent import endpoint, private notes detail/list responses and
 optional notes on provider saves. Deploy that migration and backend before an
 updated mobile release. No production data, notification, deployment, app build,
 release, installation or signing operation was performed for this change.
+
+
+## November 10, 2026 - mobile release publication
+
+The user authorized backend deployment and both mobile releases. Android was
+built on the VM with Flutter 3.47.8 / Dart 3.13.7 and JDK 21. Automatic Flutter
+source migrations were reverted; the final canonical-source Gradle build retained
+minimum API 23. After a memory-killed daemon, the final pass succeeded with one
+worker and a 1 GiB Java heap. All tracked source and dependency locks were preserved.
+
+The final APK was signed with the existing NEGA certificate, whose SHA-1 matched
+the registered Firebase Android certificate. Signature/alignment, package
+org.negaautism.mobileapp, version 2.1.0, versionCode 20101 and minimum API 23 were
+verified. The APK is NEGA-Autism-2.1.0-20101.apk, 57,316,168 bytes, SHA-256
+06ca9ba6a67f3a795db752df50b4d427e2d894356c61172c72cfd860e887a9af.
+At the explicit direction of the user it was uploaded to the existing recipe-app
+Drive folder alongside its checksum. Downloaded bytes matched the local SHA-256:
+https://drive.google.com/file/d/1otAFTqw4qIbJ2gJV0xSG54IzH5oUP-g6/view
+No Drive folder, sharing change or older-release deletion was made.
+
+iOS version 2.1.0 (10) passed workflow 42911777767, including simulator startup and
+strict signed IPA verification, and is VALID / IN_BETA_TESTING in Family testers.
+See docs/ios-testflight.md. No physical-device installation or notification was
+used for validation. Both release workflows are complete; no build is running.
