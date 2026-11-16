@@ -18,8 +18,10 @@ the Android project now states that minimum explicitly and retains the tool's
 Gradle compatibility flags. No dependency or toolchain version was upgraded.
 The signed APK is `build/app/outputs/flutter-apk/NEGA-Autism-2.1.0-20103.apk`
 (SHA-256 `8560e90e4d901fcb8a8910a1b2dc28c42b19016e9de3da5b8e91ceeab4905902`).
-Google Drive upload is pending because the configured OAuth application is
-receiving project-wide Drive API quota errors; existing releases are preserved. iOS 2.1.0 (12) is published to the
+The signed APK was uploaded to the established Google Drive folder as
+[NEGA-Autism-2.1.0-20103.apk](https://drive.google.com/file/d/1FjLtSzuUCqdFrM-7XwvMu_ZLRrFuNjY6/view).
+The uploaded file was downloaded again and its SHA-256 matched the local signed
+APK. Existing releases are preserved. iOS 2.1.0 (12) is published to the
 existing two-person Family testers group; see docs/ios-testflight.md.
 
 
