@@ -37,7 +37,7 @@ String? providerLogoUrl(String filename) {
   ).hasMatch(filename)) {
     return null;
   }
-  return Uri.https('negaautism.org', '/logos/$filename').toString();
+  return ApiEndpoints.uri('logos/$filename').toString();
 }
 
 class ProviderDirectory {
