@@ -14,7 +14,8 @@ Android build 2.1.0+020101 was assembled locally using the existing Firebase
 client configuration and signing setup. Flutter 3.47 requires Android API 24;
 the Android project now states that minimum explicitly and retains the tool's
 Gradle compatibility flags. No dependency or toolchain version was upgraded.
-APK distribution and iOS/TestFlight publication remain pending release approval.
+Android APK distribution remains pending. iOS 2.1.0 (12) is published to the
+existing two-person Family testers group; see docs/ios-testflight.md.
 
 
 ## SDK requirement

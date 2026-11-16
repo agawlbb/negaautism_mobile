@@ -178,3 +178,29 @@ Apple build `e0f1ccc2-19fa-4c81-a077-f7f0eca1bfd1` processed as `VALID` with
 was verified, and internal state is `IN_BETA_TESTING`. No testers were invited
 and no external beta or public App Store submission was made. Physical-device
 acceptance remains separate from the passing simulator startup check.
+
+
+## VPS photo storage release — November 16, 2026
+
+The user authorized building and publishing the migration update. iOS 2.1.0 (12)
+uses VPS_hosting source 9c6cbfb299764b0663f6173473aa5c38be91d385. Provider and
+category image URLs use the VPS API; backend data and photos had already moved
+to VPS storage. The old website image redirects remain for installed clients.
+
+Workflow 43887937662 completed successfully:
+https://github.com/agawlbb/negaautism_mobile/actions/runs/43887937662
+Release configuration, six signing tests, Flutter analysis/tests, simulator
+compilation, twenty-second app process survival, signed archive export, strict
+IPA identity/signature/profile checks and Apple upload passed. The runner did
+not retain a launch screenshot; physical-device and visual acceptance remain
+separate from process-survival validation.
+
+Apple upload succeeded at 2026-11-16 15:10:55 UTC. Delivery/build ID is
+b0e701da-53d4-46a0-8d66-042af480e6a0. Processing is VALID with
+usesNonExemptEncryption=false. Build assignment to the existing internal Family
+testers group c5aba762-58f3-41d7-bf03-b7c1fffa240c was confirmed, and its state
+is IN_BETA_TESTING. The existing two memberships were verified unchanged; no
+testers were invited and no external beta/public App Store submission was made.
+
+Release source remains on VPS_hosting; master was not merged. Android artifact
+distribution was not part of this iOS-only publication authorization.
