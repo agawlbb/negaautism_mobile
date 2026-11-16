@@ -10,11 +10,16 @@ website redirects old /logos/ URLs to the same VPS store so installed clients
 continue working without waiting for a mobile release. The VPS backend reads
 and writes the VPS database and filesystem; cPanel is no longer its image store.
 
-Android build 2.1.0+020101 was assembled locally using the existing Firebase
-client configuration and signing setup. Flutter 3.47 requires Android API 24;
+Android build 2.1.0+020103 was assembled locally using the existing Firebase
+client configuration and signed with the preserved original Android key. Its
+certificate matches the existing Google Drive build 20102; the VM-generated
+debug key must not be used for distributed updates. Flutter 3.47 requires Android API 24;
 the Android project now states that minimum explicitly and retains the tool's
 Gradle compatibility flags. No dependency or toolchain version was upgraded.
-Android APK distribution remains pending. iOS 2.1.0 (12) is published to the
+The signed APK is `build/app/outputs/flutter-apk/NEGA-Autism-2.1.0-20103.apk`
+(SHA-256 `8560e90e4d901fcb8a8910a1b2dc28c42b19016e9de3da5b8e91ceeab4905902`).
+Google Drive upload is pending because the configured OAuth application is
+receiving project-wide Drive API quota errors; existing releases are preserved. iOS 2.1.0 (12) is published to the
 existing two-person Family testers group; see docs/ios-testflight.md.
 
 
