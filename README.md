@@ -2,6 +2,21 @@
 
 Mobile app for negaautism
 
+## VPS storage migration — November 16, 2026
+
+Provider/category image URLs now use https://vps.negaautism.org/api/logos/.
+Database IDs and image filename fields are unchanged. The existing InMotion
+website redirects old /logos/ URLs to the same VPS store so installed clients
+continue working without waiting for a mobile release. The VPS backend reads
+and writes the VPS database and filesystem; cPanel is no longer its image store.
+
+Android build 2.1.0+020101 was assembled locally using the existing Firebase
+client configuration and signing setup. Flutter 3.47 requires Android API 24;
+the Android project now states that minimum explicitly and retains the tool's
+Gradle compatibility flags. No dependency or toolchain version was upgraded.
+APK distribution and iOS/TestFlight publication remain pending release approval.
+
+
 ## SDK requirement
 
 Use Flutter stable 3.47.8 or later with Dart 3.13.7 or later, as required by
@@ -34,18 +49,18 @@ Accounts with the Firebase `manage_providers` claim can add and edit providers.
 The app refreshes the token before saving; the server checks the claim and token
 revocation independently. User type and notification preferences do not grant
 management access. New providers added by verified managers are approved
-immediately by the website API. Public submissions retain their approval
+immediately by the VPS API. Public submissions retain their approval
 workflow. Editing preserves approval, submitter and reviews. The directory shows
 provider logos; add/edit forms allow a JPG/PNG upload (up to 500 KB), with a preview.
 Omitting an upload preserves the existing logo. Approval changes and deletion
-remain website operations.
+are available through mobile administration.
 
-This feature requires the website's `api/get_providers.php` and
-`api/save_provider.php`, documented in its `docs/mobile-provider-api.md`. Website
-deployment is separate; an unavailable API displays an error with a retry option.
+This feature uses the VPS `/api/providers` and administrative routes documented
+in the backend's `docs/mobile-admin-api.md`. An unavailable API displays an error
+with a retry option; uncertain writes are not automatically retried.
 
-Development and tests run in the VPS development container; Android builds and
-device validation run on the laptop. iOS builds and TestFlight uploads use manually dispatched GitHub macOS runners,
+Development, tests and Android builds run in the VM development container.
+Physical-device acceptance remains separate. iOS builds and TestFlight uploads use manually dispatched GitHub macOS runners,
 as authorized October 29, 2026. See [iOS release setup](docs/ios-testflight.md). No production writes are needed for tests:
 
 ```
@@ -72,7 +87,7 @@ no value. Existing values are retained unless selected or edited. An equivalent
 HTTPS website suggestion (such as justpeople.org to https://justpeople.org) is
 selected automatically; a different website or page is not.
 The AI review screen validates required fields before **Add provider** saves
-the reviewed form through the existing hosted API. The review keeps administrator
+the reviewed form through the existing VPS API. The review keeps administrator
 notes and supporting addresses without showing a Sources section or introductory
 instructions. The entry form also omits instructional paragraphs.
 Successful adds close both review and entry screens and return to the directory.
