@@ -15,7 +15,7 @@ void main() {
       final api = VpsApi(
         token: () async => 'fresh-${++refreshed}',
         client: MockClient((r) async {
-          expect(r.url.host, 'vps.negaautism.org');
+          expect(r.url.host, 'negaautism.org');
           expect(r.headers['Authorization'], 'Bearer fresh-$refreshed');
           expect(r.url.toString(), isNot(contains('fresh-')));
           expect(r.body, isNot(contains('fresh-')));

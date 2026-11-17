@@ -2,9 +2,18 @@
 
 Mobile app for negaautism
 
+## Canonical API hostname — November 17, 2026
+
+HTTP API requests, provider/category logos and provider extraction WebSocket
+connections now use `negaautism.org`. The API paths and payloads are unchanged.
+The new hostname was verified live for provider/event JSON, a provider logo,
+protected-route authentication and the WebSocket handshake. Installed apps
+need a new build and release to pick up this client change; retain the old
+VPS hostname for compatibility with existing versions.
+
 ## VPS storage migration — November 16, 2026
 
-Provider/category image URLs now use https://vps.negaautism.org/api/logos/.
+Provider/category image URLs now use https://negaautism.org/api/logos/.
 Database IDs and image filename fields are unchanged. The existing InMotion
 website redirects old /logos/ URLs to the same VPS store so installed clients
 continue working without waiting for a mobile release. The VPS backend reads
@@ -84,7 +93,7 @@ it does not establish Android build compatibility or update installed apps.
 ## Provider website assistance
 
 New provider forms offer **Fill from website** through the dedicated
-`wss://vps.negaautism.org/ws` service. Task branch `feature/ai-provider-import`
+`wss://negaautism.org/ws` service. Task branch `feature/ai-provider-import`
 is based on fetched `origin/master` at `1c08e78`. The app sends a fresh Firebase
 manager token, website URL and existing category/county choices. The VPS reads
 relevant linked pages and returns suggestions; no hosted backend change is needed.

@@ -15,8 +15,8 @@ Uint8List png() => base64Decode(
 );
 
 void main() {
-  test('logo URLs stay on the VPS logo endpoint and reject paths or external URLs', () {
-    expect(providerLogoUrl('42.png'), 'https://vps.negaautism.org/api/logos/42.png');
+  test('logo URLs stay on the canonical logo endpoint and reject paths or external URLs', () {
+    expect(providerLogoUrl('42.png'), 'https://negaautism.org/api/logos/42.png');
     for (final value in [
       '',
       '../secret.png',

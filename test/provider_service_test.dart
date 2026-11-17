@@ -61,7 +61,7 @@ void main() {
       final service = ProviderService(
         client: MockClient((request) async {
           expect(request.method, 'GET');
-          expect(request.url.host, 'vps.negaautism.org');
+          expect(request.url.host, 'negaautism.org');
           expect(request.url.path, '/api/providers');
           expect(request.url.queryParameters, {
             'county_id': '2',
@@ -107,7 +107,7 @@ void main() {
     final service = ProviderService(
       client: MockClient((request) async {
         expect(request.method, 'PUT');
-        expect(request.url.host, 'vps.negaautism.org');
+        expect(request.url.host, 'negaautism.org');
         expect(request.url.path, '/api/providers/7');
         expect(request.headers['Authorization'], 'Bearer synthetic-token');
         expect(request.url.query, isEmpty);

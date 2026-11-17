@@ -40,7 +40,7 @@ class ProviderExtractionService {
   WebSocket? _socket;
   bool _closed = false;
   ProviderExtractionService({Uri? endpoint})
-    : endpoint = endpoint ?? Uri.parse('wss://vps.negaautism.org/ws');
+    : endpoint = endpoint ?? Uri.parse('wss://negaautism.org/ws');
 
   Future<ProviderSuggestions> extract({
     required String url,
