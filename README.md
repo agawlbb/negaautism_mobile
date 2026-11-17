@@ -11,6 +11,22 @@ protected-route authentication and the WebSocket handshake. Installed apps
 need a new build and release to pick up this client change; retain the old
 VPS hostname for compatibility with existing versions.
 
+## Canonical API app releases — November 17, 2026
+
+Android 2.1.0 (20104) was built from source `805717a` on the VM and signed
+with the preserved original Android key. Its signing certificate matches build
+20103. All 64 Flutter tests and analysis passed. All three compiled Android
+architectures contain the canonical API hostname and no old VPS hostname.
+
+[Download NEGA-Autism-2.1.0-20104.apk](https://drive.google.com/file/d/1PYO5_aok0a2GpOh6Y-EQ-fH91UncGb7w/view).
+The APK was downloaded from the established Drive folder and compared byte for
+byte with the signed local file. SHA-256:
+`5de957dd538d0776e4d99314156516ab7df03425981b11a50b81c7bda1c9ebd8`.
+Existing releases were preserved. Physical-device acceptance remains separate.
+
+iOS 2.1.0 (13) from the same source is published to the existing Family testers
+TestFlight group and verified IN_BETA_TESTING. See [iOS release evidence](docs/ios-testflight.md).
+
 ## VPS storage migration — November 16, 2026
 
 Provider/category image URLs now use https://negaautism.org/api/logos/.

@@ -204,3 +204,22 @@ testers were invited and no external beta/public App Store submission was made.
 
 Release source remains on VPS_hosting; master was not merged. Android artifact
 distribution was not part of this iOS-only publication authorization.
+
+## Canonical API hostname release — November 17, 2026
+
+The user authorized Apple and Android releases for the API hostname migration.
+iOS 2.1.0 (13) uses source `805717a549acacb42fa7c2c9bda70615b64708cc`
+on master. HTTP APIs, logos and the extraction WebSocket use negaautism.org.
+
+Workflow [44186734485](https://github.com/agawlbb/negaautism_mobile/actions/runs/44186734485)
+passed release configuration, signing tests, Flutter analysis/tests, simulator
+compilation, twenty-second app process survival, signed archive export and
+exported IPA verification. Simulator display capture was unavailable; visual
+and physical-device acceptance remain separate.
+
+Apple upload succeeded without errors at 2026-11-17 22:33:10 UTC. Build/delivery
+ID is `f00c05cd-3681-4268-9263-6ff6611705cf`. Apple processing is VALID with
+usesNonExemptEncryption=false. Assignment to the existing internal Family testers
+group `c5aba762-58f3-41d7-bf03-b7c1fffa240c` was confirmed, and internal
+state is IN_BETA_TESTING. The existing two memberships remain unchanged.
+The paired Android 2.1.0 (20104) release is documented in README.md.
