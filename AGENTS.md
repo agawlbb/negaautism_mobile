@@ -10,10 +10,10 @@ Apple builds retain the existing macOS runner exception under that procedure.
 
 ## Repository workflow
 
-Canonical repository: `agawlbb/negaautism_mobile`; default branch: `master`.
+Canonical repository: `agawlbb/negaautism_mobile`; default branch: `main`.
 Follow the VM-wide working procedure in `/home/dev/projects/AGENTS.md`.
-Use the existing checkout on `master`, one task at a time; no routine task
-branches, extra worktrees or ownership claims. Commit and push completed source changes to `master`.
+Use the existing checkout on `main`, one task at a time; no routine task
+branches, extra worktrees or ownership claims. Commit and push completed source changes to `main`.
 Use only relevant checks; do not repeat passing checks without a concrete reason.
 Questions and status checks are read-only. Preserve unrelated work and credentials.
 Deploy only when the user explicitly requests deployment. In every answer state

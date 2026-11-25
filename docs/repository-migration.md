@@ -5,7 +5,7 @@ with the previous repository retained privately for recovery. The replacement is
 an independent repository, not a GitHub fork or a mirror of the old object store.
 
 - Canonical source: https://github.com/agawlbb/negaautism_mobile
-- Default branch: master
+- Default branch: main (renamed from master on November 25, 2026)
 - Canonical laptop folder: the existing mobile application checkout.
 - Private original/archive: https://github.com/agawlbb/negaautism_mobile-private-archive-20261029
 - The original issue tracker remains in that private archive. Its eight issues
@@ -42,3 +42,11 @@ the private archive as an active remote or development workspace.
 
 Source publication approval is separate. This migration does not build an app,
 install it, deploy backend changes, change credentials, or enable a GitHub runner.
+
+## Default branch rename — November 25, 2026
+
+The canonical GitHub default and VM checkout now use `main`. The rename
+preserves commit history; older branch names in dated records remain historical.
+For another clean checkout already using the scrubbed history, fetch origin,
+rename its local `master` to `main`, set the upstream to `origin/main`, and run
+`git remote set-head origin -a`. Preserve unique work before synchronizing.
